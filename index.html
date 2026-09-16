@@ -12,6 +12,9 @@
     --radius:10px; --tap:40px; --fs:clamp(13px,2.2vw,15px); --fs-sm:clamp(11px,1.9vw,13px);
     --blue-600:#2563eb; --blue-500:#3b82f6; --blue-400:#60a5fa; --blue-300:#93c5fd;
   }
+  html[data-theme="dark"]{
+    --bg:#0b1020;--paper:#111827;--ink:#f8fafc;--muted:#94a3b8;--line:#334155;--accent:#60a5fa
+  }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{font-family:system-ui,-apple-system,Segoe UI,Inter,Arial,sans-serif;font-size:var(--fs);background:var(--bg);color:var(--ink)}
@@ -26,12 +29,12 @@
   .menu-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   .langbtn{
     display:inline-flex;align-items:center;gap:8px;
-    padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm);cursor:pointer
+    padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);font-size:var(--fs-sm);cursor:pointer
   }
   .flag{font-size:16px;line-height:1}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:inherit;cursor:pointer}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:inherit;cursor:pointer;touch-action:manipulation}
   .btn.primary{background:var(--blue-600);color:#fff;border-color:#1d4ed8}
-  .btn.secondary{background:#fff;border-color:var(--line)}
+  .btn.secondary{background:var(--paper);border-color:var(--line)}
   .btn.danger{background:#fee2e2;border-color:#fecaca}
   .btn.small{min-height:34px;padding:6px 10px;font-size:var(--fs-sm)}
 
@@ -39,36 +42,40 @@
   .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
   .pad{padding:8px}
   label{font-size:var(--fs-sm);color:var(--muted)}
-  input[type=text], input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  input[type=text], input[type=number]{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:16px}
 
-  .lang-card .row2{display:grid;grid-template-columns:1fr 140px 90px;gap:8px}
+  .lang-card .row2{display:grid;grid-template-columns:1.2fr 1.2fr 140px 120px;gap:8px}
+  .study-details{margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+  .study-details summary{cursor:pointer;color:var(--muted);font-weight:700}
+  .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 
-  .timer-card .controls{display:flex;gap:8px;align-items:center}
+  .timer-card .controls{display:grid;grid-template-columns:minmax(150px,1fr) minmax(140px,.8fr);gap:8px;align-items:center}
   .timer-card .controls > *{min-width:0}
-  .timer-card .start{flex:0 0 35%}
-  .timer-card .mid{flex:0 0 50%;display:flex;justify-content:center}
-  .timer-card .stop{flex:0 0 15%}
+  .timer-card .mid{display:flex;justify-content:center}
   .timer{font-weight:800;font-size:18px;background:#0a0;color:#fff;padding:10px 12px;border-radius:8px;text-align:center;min-width:0;width:100%}
 
   .wrap{display:grid;grid-template-columns:1.2fr 0.8fr;gap:8px;margin-top:8px}
   .chart-card{display:flex;flex-direction:column}
   .chart-header{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px}
   .chart-title{margin:0;font-size:18px;font-weight:700;color:var(--ink)}
-  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-  .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:var(--fs-sm)}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .pill{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);font-size:var(--fs-sm)}
+  .pill b{display:block;margin-top:2px;font-size:15px}
   .chart-wrap{padding:6px}
   canvas{width:100%;height:360px;display:block}
 
-  .list-head,.list-row{display:grid;grid-template-columns:56px 110px 1fr 40px;gap:8px;align-items:center}
-  .list-head{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px;font-weight:700;z-index:1}
+  .list-head,.list-row{display:grid;grid-template-columns:50px 100px 76px 1fr 40px;gap:8px;align-items:center}
+  .list-head{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:8px;font-weight:700;z-index:1}
   .list{max-height:460px;overflow:auto;border-top:1px solid var(--line);padding:8px}
   .list-row{
-    padding:10px;background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);
+    padding:10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);
   }
-  .list-row:nth-child(odd){background:#f9fbff}
-  .list-row.selected{outline:2px solid #93c5fd;background:#eff6ff}
+  .list-row.selected{outline:2px solid #60a5fa}
+  .list-row.abnormal{border-left:5px solid #dc2626}
   .badge{display:inline-block;background:#e2e8f0;color:#334155;padding:4px 8px;border-radius:999px;font-size:var(--fs-sm);font-weight:600}
-  textarea{width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:var(--fs-sm)}
+  textarea{width:100%;min-height:42px;border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--paper);color:var(--ink);font:inherit;font-size:16px}
+  .flag-btn{min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--muted);font-weight:700;cursor:pointer}
+  .flag-btn.active{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
   .delete-btn{cursor:pointer;border:none;background:none;font-size:18px;line-height:1;color:#dc2626}
   .delete-btn:hover{color:#b91c1c}
 
@@ -78,19 +85,32 @@
     .top-grid{grid-template-columns:1fr}
   }
   @media (max-width:640px){
-    .kpis{grid-template-columns:1fr}
+    .app{padding:6px;padding-bottom:116px}
+    .menubar{align-items:flex-start}
+    .menu-actions{width:100%;display:grid;grid-template-columns:repeat(5,1fr)}
+    .menu-actions .btn,.menu-actions .langbtn{padding:6px 4px;font-size:11px;min-width:0}
+    .lang-card .row2,.details-grid{grid-template-columns:1fr 1fr}
+    .kpis{grid-template-columns:repeat(2,1fr)}
     .list-head{display:none}
     .list{max-height:none;padding:8px}
     .list-row{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:
       "cycle time"
+      "flag flag"
       "problems problems"
       "delete delete"}
     .list-row .cycle{grid-area:cycle}
     .list-row .time{grid-area:time}
+    .list-row .flag-cell{grid-area:flag}
     .list-row .problems{grid-area:problems}
     .list-row .delete-cell{grid-area:delete;text-align:right}
-    .timer-card .controls{gap:6px}
+    .timer-card{position:fixed;z-index:20;left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));box-shadow:0 12px 30px rgba(0,0,0,.28)}
+    .timer-card .controls{grid-template-columns:1.25fr .75fr;gap:6px}
+    .timer-card .btn{min-height:58px;font-size:20px!important}
+    .timer{font-size:20px;padding:16px 8px}
+    canvas{height:260px}
   }
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:40;background:#0f172a;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  .hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -101,6 +121,7 @@
     <div class="logo">20 Cycle Check</div>
     <div class="menu-actions">
       <button id="btnLang" class="langbtn"><span class="flag">🇸🇪</span><span id="langLabel">SV</span></button>
+      <button id="btnTheme" class="btn small" title="Tema">◐</button>
       <button id="btnExport" class="btn small">Exportera</button>
       <button id="btnReport" class="btn small">Rapport (PDF)</button>
       <button id="btnReset" class="btn small danger">Nollställ</button>
@@ -116,6 +137,11 @@
           <input id="process" type="text" placeholder="Ange processnamn…">
         </div>
         <div>
+          <label id="lblSubprocess">UNDERPROCESS</label>
+          <input id="subprocess" type="text" list="subprocessOptions" placeholder="Välj eller skriv…" autocomplete="off">
+          <datalist id="subprocessOptions"></datalist>
+        </div>
+        <div>
           <label id="lblDate">DATE</label>
           <input id="date" type="text" placeholder="yyyy-mm-dd">
         </div>
@@ -128,13 +154,25 @@
           </div>
         </div>
       </div>
+      <details class="study-details">
+        <summary id="detailsSummary">Mätdetaljer (valfritt)</summary>
+        <div class="details-grid">
+          <div>
+            <label id="lblProduct">ARTIKEL / VARIANT</label>
+            <input id="product" type="text" placeholder="Artikel, familj eller variant">
+          </div>
+          <div>
+            <label id="lblBoundary">MÄTGRÄNS</label>
+            <input id="boundary" type="text" placeholder="Startpunkt → slutpunkt">
+          </div>
+        </div>
+      </details>
     </div>
 
     <div class="card pad timer-card">
       <div class="controls">
         <div class="start"><button id="btnToggle" class="btn primary" style="width:100%;font-size:16px;padding:12px 14px">Start</button></div>
         <div class="mid"><div class="timer" id="timerDisp">00:00.00</div></div>
-        <div class="stop"><button id="btnStop" class="btn secondary" style="width:100%">Stoppa</button></div>
       </div>
     </div>
   </div>
@@ -145,8 +183,12 @@
       <div class="chart-header pad">
         <h3 id="resultsTitle" class="chart-title">Resultat</h3>
         <div class="kpis">
+          <div class="pill"><span id="kpiProgressLabel"></span> <b id="kpiProgress">0 / 20</b></div>
           <div class="pill"><span id="kpiAvgLabel"></span> <b id="kpiAvg">00:00.00</b></div>
           <div class="pill"><span id="kpiBrctLabel"></span> <b id="kpiBrct">–</b></div>
+          <div class="pill"><span id="kpiDistLabel"></span> <b id="kpiDist">–</b></div>
+          <div class="pill"><span id="kpiSigmaLabel"></span> <b id="kpiSigma">–</b></div>
+          <div class="pill"><span id="kpiTaktLabel"></span> <b id="kpiTakt">–</b></div>
         </div>
       </div>
       <div class="chart-wrap">
@@ -158,6 +200,7 @@
       <div class="list-head">
         <div id="thCycle">CYCLE</div>
         <div id="thTime">TIME(S)</div>
+        <div id="thDeviation">AVV.</div>
         <div id="thProblems">OBSERVED PROBLEMS</div>
         <div> </div>
       </div>
@@ -165,6 +208,7 @@
     </div>
   </div>
 </div>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
 <!-- jsPDF för PDF-export -->
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -172,25 +216,31 @@
 <script>
 /* ===== i18n ===== */
 const L={
-  sv:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Ange processnamn…",PH_DATE:"yyyy-mm-dd",
+  sv:{PROCESS:"PROCESS",SUBPROCESS:"UNDERPROCESS",DATE:"DATUM",PH_PROCESS:"Ange processnamn…",PH_SUBPROCESS:"Välj eller skriv…",PH_DATE:"yyyy-mm-dd",
       TAKT:"TAKT", PH_TAKT:"sek", TAKT_LABEL:"Kundtakt:",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Varv",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Exportera",REPORT:"Rapport (PDF)",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Spara cykel",RESET:"Nollställ",EXPORT:"Excel",REPORT:"PDF",
       RESULTS_TITLE:"Resultat",
-      KPI_AVG:"Ø CT (medel):",KPI_BRCT:"BRCT (5 snabbaste):",
+      KPI_PROGRESS:"Cykler",KPI_AVG:"Ø CT (medel)",KPI_BRCT:"BRCT (5 snabbaste)",KPI_DIST:"Störningsgrad",KPI_SIGMA:"Standardavvikelse",KPI_TAKT:"Över takt",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:",",
       LONGEST:"Längsta CT:", SHORTEST:"Kortaste CT:", DISTURBANCE:"D %:",
+      PRODUCT:"ARTIKEL / VARIANT",BOUNDARY:"MÄTGRÄNS",DETAILS:"Mätdetaljer (valfritt)",PH_PRODUCT:"Artikel, familj eller variant",PH_BOUNDARY:"Startpunkt → slutpunkt",
+      CYCLE:"CYKEL",TIME:"TID",DEVIATION:"AVV.",PROBLEMS:"NOTERING / PROBLEM",FLAG:"Avvikelse",NOTE_PLACEHOLDER:"Notering eller observerat problem",THEME:"Tema",
+      COMPLETE:"20 cykler klara",DELETED:"Cykel raderad",UNDO:"Ångra",NO_DATA:"Inga cykler att exportera.",
       CALC_TAKT_BTN:"Beräkna", /* NEW */
       PROMPT_VOLUME:"Ange årsvolym (antal enheter/år):", /* NEW */
       PROMPT_HOURS:"Ange arbetstid per vecka (timmar) — 78 är standard:", /* NEW */
       ALERT_BAD_INPUT:"Ogiltiga värden. Försök igen." /* NEW */
   },
-  en:{PROCESS:"PROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_DATE:"yyyy-mm-dd",
+  en:{PROCESS:"PROCESS",SUBPROCESS:"SUBPROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_SUBPROCESS:"Choose or type…",PH_DATE:"yyyy-mm-dd",
       TAKT:"TAKT", PH_TAKT:"sec", TAKT_LABEL:"Takt:",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Lap",STOP:"Stop",RESET:"Reset",EXPORT:"Export",REPORT:"Report (PDF)",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Save cycle",RESET:"Reset",EXPORT:"Excel",REPORT:"PDF",
       RESULTS_TITLE:"Results",
-      KPI_AVG:"Ø CT (mean):",KPI_BRCT:"BRCT (5 fastest):",
+      KPI_PROGRESS:"Cycles",KPI_AVG:"Ø CT (mean)",KPI_BRCT:"BRCT (5 fastest)",KPI_DIST:"Disturbance rate",KPI_SIGMA:"Standard deviation",KPI_TAKT:"Above takt",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:".",
       LONGEST:"Longest CT:", SHORTEST:"Shortest CT:", DISTURBANCE:"D %:",
+      PRODUCT:"ARTICLE / VARIANT",BOUNDARY:"MEASUREMENT BOUNDARY",DETAILS:"Study details (optional)",PH_PRODUCT:"Article, family or variant",PH_BOUNDARY:"Start point → end point",
+      CYCLE:"CYCLE",TIME:"TIME",DEVIATION:"DEV.",PROBLEMS:"NOTE / PROBLEM",FLAG:"Deviation",NOTE_PLACEHOLDER:"Note or observed problem",THEME:"Theme",
+      COMPLETE:"20 cycles completed",DELETED:"Cycle deleted",UNDO:"Undo",NO_DATA:"No cycles to export.",
       CALC_TAKT_BTN:"Calculate", /* NEW */
       PROMPT_VOLUME:"Enter annual volume (units/year):", /* NEW */
       PROMPT_HOURS:"Enter working hours per week — 78 is default:", /* NEW */
@@ -209,34 +259,53 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[];
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
-const STORAGE_KEY='cycle-check-state-v6';
+const STORAGE_KEY='cycle-check-state-v7';
+const LEGACY_STORAGE_KEY='cycle-check-state-v6';
+const SUBPROCESS_HISTORY_KEY='cycle-check-subprocesses-v1';
+let theme='auto', wakeLock=null, deletedLap=null, toastTimer=null;
 
 let rafId=null;
 
 /* ===== UI refs ===== */
-const processInput=$('#process'), dateInput=$('#date'), taktInput=$('#takt');
-const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp');
+const processInput=$('#process'), subprocessInput=$('#subprocess'), dateInput=$('#date'), taktInput=$('#takt');
+const productInput=$('#product'), boundaryInput=$('#boundary');
+const toggleBtn=$('#btnToggle'), timerDisp=$('#timerDisp');
 const chart=$('#chart');
 
 /* ===== i18n apply ===== */
 function setLangTexts(){
   $('#lblProcess').textContent=L[lang].PROCESS;
+  $('#lblSubprocess').textContent=L[lang].SUBPROCESS;
   $('#lblDate').textContent=L[lang].DATE;
   $('#lblTakt').textContent=L[lang].TAKT;
   $('#process').placeholder=L[lang].PH_PROCESS;
+  $('#subprocess').placeholder=L[lang].PH_SUBPROCESS;
   $('#date').placeholder=L[lang].PH_DATE;
   taktInput.placeholder=L[lang].PH_TAKT;
   $('#btnExport').textContent=L[lang].EXPORT;
   $('#btnReport').textContent=L[lang].REPORT;
   $('#btnReset').textContent=L[lang].RESET;
   $('#resultsTitle').textContent=L[lang].RESULTS_TITLE;
+  $('#kpiProgressLabel').textContent=L[lang].KPI_PROGRESS;
   $('#kpiAvgLabel').textContent=L[lang].KPI_AVG;
   $('#kpiBrctLabel').textContent=L[lang].KPI_BRCT;
+  $('#kpiDistLabel').textContent=L[lang].KPI_DIST;
+  $('#kpiSigmaLabel').textContent=L[lang].KPI_SIGMA;
+  $('#kpiTaktLabel').textContent=L[lang].KPI_TAKT;
+  $('#lblProduct').textContent=L[lang].PRODUCT;
+  $('#lblBoundary').textContent=L[lang].BOUNDARY;
+  $('#detailsSummary').textContent=L[lang].DETAILS;
+  productInput.placeholder=L[lang].PH_PRODUCT;
+  boundaryInput.placeholder=L[lang].PH_BOUNDARY;
+  $('#thCycle').textContent=L[lang].CYCLE;
+  $('#thTime').textContent=L[lang].TIME;
+  $('#thDeviation').textContent=L[lang].DEVIATION;
+  $('#thProblems').textContent=L[lang].PROBLEMS;
   toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
-  stopBtn.textContent = L[lang].STOP;
   $('#langLabel').textContent = lang==='sv'?'SV':'EN';
   $('#btnLang').querySelector('.flag').textContent = lang==='sv'?'🇸🇪':'🇬🇧';
   document.getElementById('btnCalcTakt').textContent = L[lang].CALC_TAKT_BTN; /* NEW */
+  document.getElementById('btnTheme').title = L[lang].THEME;
   renderList();
 }
 
@@ -249,7 +318,7 @@ function startTimer(){
   if(tick) clearInterval(tick);
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
   toggleBtn.textContent=L[lang].TOGGLE_LAP;
-  stopBtn.disabled=false;
+  requestWakeLock();
   startLoop();
 }
 function lap(){
@@ -258,24 +327,32 @@ function lap(){
   const elapsed = Math.max(10, now - tStart);
   tStart = now;
   timerDisp.textContent = '00:00.00';
-  laps.push({ms: elapsed, note: ''});
+  laps.push({ms: elapsed, note: '', abnormal:false});
   selectedIndex = laps.length - 1;
+  if(navigator.vibrate) navigator.vibrate(25);
+  if(laps.length===20) showToast(L[lang].COMPLETE);
   refreshUI();
 }
-function stopTimer(){
+function cancelCurrentTimer(){
   if(running){
     running=false;
     if(tick){ clearInterval(tick); tick=null; }
     toggleBtn.textContent=L[lang].TOGGLE_START;
   }
-  stopBtn.disabled=true;
   timerDisp.textContent='00:00.00';
   stopLoop();
-  refreshUI();
+  releaseWakeLock();
 }
 function toggle(){ running ? lap() : startTimer(); }
 toggleBtn.addEventListener('click', toggle);
-stopBtn.addEventListener('click', stopTimer);
+
+async function requestWakeLock(){
+  try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+}
+async function releaseWakeLock(){
+  try{ if(wakeLock) await wakeLock.release(); }catch(e){} finally{ wakeLock=null; }
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && running) requestWakeLock(); });
 
 /* ===== Tangentbord ===== */
 window.addEventListener('keydown', e=>{
@@ -286,9 +363,6 @@ window.addEventListener('keydown', e=>{
     if(tag==='TEXTAREA' || (tag==='INPUT' && (ae.type||'').toLowerCase()!=='button')) return;
     e.preventDefault();
     running ? lap() : startTimer();
-  }
-  if(e.key && e.key.toLowerCase()==='s'){
-    if(tag!=='TEXTAREA' && tag!=='INPUT'){ e.preventDefault(); stopTimer(); }
   }
   if(e.key==='Delete' || e.key==='Backspace'){
     if(tag==='TEXTAREA' || tag==='INPUT'){ return; }
@@ -304,9 +378,31 @@ function selectRow(ix){
 }
 function deleteSelected(){
   if(selectedIndex<0 || selectedIndex>=laps.length) return;
-  laps.splice(selectedIndex,1);
+  const ix=selectedIndex;
+  deletedLap={lap:laps[ix],index:ix};
+  laps.splice(ix,1);
   selectedIndex=-1;
   refreshUI();
+  showUndoToast();
+}
+
+function showToast(message, actionText='', action=null){
+  const toast=$('#toast');
+  clearTimeout(toastTimer);
+  toast.innerHTML='';
+  const span=document.createElement('span'); span.textContent=message; toast.appendChild(span);
+  if(action){
+    const btn=document.createElement('button'); btn.className='btn small'; btn.style.marginLeft='10px'; btn.textContent=actionText;
+    btn.addEventListener('click',()=>{ action(); toast.classList.add('hidden'); }); toast.appendChild(btn);
+  }
+  toast.classList.remove('hidden');
+  toastTimer=setTimeout(()=>toast.classList.add('hidden'),4500);
+}
+function showUndoToast(){
+  showToast(L[lang].DELETED,L[lang].UNDO,()=>{
+    if(!deletedLap) return;
+    laps.splice(deletedLap.index,0,deletedLap.lap); deletedLap=null; refreshUI();
+  });
 }
 
 /* ===== Lista/KPI ===== */
@@ -315,11 +411,13 @@ function renderList(){
   laps.forEach((l,i)=>{
     const row=document.createElement('div'); row.className='list-row';
     if(i===selectedIndex) row.classList.add('selected');
+    if(l.abnormal) row.classList.add('abnormal');
     row.innerHTML=
       `<div class="cell cycle"><span class="badge">${i+1}</span></div>
        <div class="cell time"><b>${formatMs(l.ms)}</b></div>
+       <div class="flag-cell"><button class="flag-btn ${l.abnormal?'active':''}" type="button" data-flag-ix="${i}" aria-pressed="${l.abnormal?'true':'false'}">${L[lang].FLAG}</button></div>
        <div class="cell problems">
-         <textarea data-ix="${i}" placeholder="Notes / Problem"></textarea>
+         <textarea data-ix="${i}" placeholder="${L[lang].NOTE_PLACEHOLDER}"></textarea>
        </div>
        <div class="delete-cell"><button class="delete-btn" title="Delete" data-ix="${i}">🗑️</button></div>`;
     list.appendChild(row);
@@ -328,25 +426,43 @@ function renderList(){
     ta.addEventListener('focus', ()=> selectRow(i));
     ta.addEventListener('input', e=>{ const ix=+e.target.dataset.ix; laps[ix].note=e.target.value; saveState(); });
   });
+  list.querySelectorAll('.flag-btn').forEach(btn=>btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const ix=+e.currentTarget.dataset.flagIx;
+    laps[ix].abnormal=!laps[ix].abnormal;
+    refreshUI();
+  }));
   list.querySelectorAll('.delete-btn').forEach(btn=>btn.addEventListener('click',e=>{
     e.stopPropagation();
     const ix=+e.currentTarget.dataset.ix;
+    deletedLap={lap:laps[ix],index:ix};
     laps.splice(ix,1);
     if(selectedIndex===ix) selectedIndex=-1; else if(selectedIndex>ix) selectedIndex--;
     refreshUI();
+    showUndoToast();
   }));
 }
 
 function avgMs(a){return a.length? a.reduce((x,y)=>x+y,0)/a.length:0}
-function brctMs(a){ if(a.length<5) return null; return avgMs([...a].sort((x,y)=>x-y).slice(0,5)); }
+function brctMs(a){ if(!a.length) return null; return avgMs([...a].sort((x,y)=>x-y).slice(0,Math.min(5,a.length))); }
 function longestMs(arr){ return arr.length ? Math.max(...arr) : 0; }
 function shortestMs(arr){ return arr.length ? Math.min(...arr) : 0; }
 function disturbanceRate(avg, br){ return (avg>0 && br!==null) ? ((avg - br)/avg*100) : 0; }
+function standardDeviation(arr){
+  if(arr.length<2) return 0;
+  const mean=avgMs(arr);
+  return Math.sqrt(arr.reduce((sum,x)=>sum+Math.pow(x-mean,2),0)/(arr.length-1));
+}
 
 function updateKPIs(){
   const arr=laps.map(x=>x.ms), avg=avgMs(arr), br=brctMs(arr);
+  const taktMs=Number(taktInput.value||0)*1000;
   $('#kpiAvg').textContent=arr.length?formatMs(Math.round(avg)):'00:00.00';
   $('#kpiBrct').textContent=br!==null?formatMs(Math.round(br)):'–';
+  $('#kpiProgress').textContent=`${laps.length} / 20${laps.length>20?' +':''}`;
+  $('#kpiDist').textContent=arr.length?`${disturbanceRate(avg,br).toFixed(1)} %`:'–';
+  $('#kpiSigma').textContent=arr.length>1?formatMs(Math.round(standardDeviation(arr))):'–';
+  $('#kpiTakt').textContent=taktMs>0?`${arr.filter(x=>x>taktMs).length} / ${arr.length}`:'–';
 }
 
 /* ===== Diagram ===== */
@@ -362,6 +478,10 @@ function drawChart(){
   const padR = 96*dpr, padT = 16*dpr, padB = 42*dpr;
   const innerW=W-padL-padR, innerH=H-padT-padB;
   const ctx=c.getContext('2d');
+  const styles=getComputedStyle(document.documentElement);
+  const ink=styles.getPropertyValue('--ink').trim()||'#0f172a';
+  const line=styles.getPropertyValue('--line').trim()||'#e2e8f0';
+  const paper=styles.getPropertyValue('--paper').trim()||'#ffffff';
   ctx.clearRect(0,0,W,H);
   if(innerW<=0 || innerH<=0) return;
 
@@ -379,13 +499,13 @@ function drawChart(){
   ctx.textBaseline = 'middle';
   for (let s = 0; s <= maxS; s++) {
     const y = msToY(s * 1000);
-    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1 * dpr;
+    ctx.strokeStyle = line; ctx.lineWidth = 1 * dpr;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     if (s % 5 === 0) {
       ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5 * dpr;
       ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
       const m = Math.floor(s / 60), sec = s % 60;
-      ctx.fillStyle = '#334155';
+      ctx.fillStyle = ink;
       ctx.fillText(`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`, 4*dpr, y);
     }
   }
@@ -401,9 +521,11 @@ function drawChart(){
       const x=padL+i*(bw+gap);
       const y=msToY(ms);
       const h=msToY(0)-y;
-      ctx.fillStyle=palette[i%palette.length];
+      const isCurrent=running && i===laps.length;
+      const overTakt=Number(taktInput.value||0)>0 && ms>Number(taktInput.value)*1000;
+      ctx.fillStyle=isCurrent?'#22c55e':(laps[i]?.abnormal?'#dc2626':(overTakt?'#f59e0b':palette[i%palette.length]));
       ctx.fillRect(Math.round(x),Math.round(y),Math.floor(bw),Math.max(0,Math.round(h)));
-      ctx.fillStyle='#1f2937'; ctx.font=`${10*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+      ctx.fillStyle=ink; ctx.font=`${10*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
       ctx.textAlign='center'; ctx.textBaseline='top';
       ctx.fillText(`${i+1}`,x+bw/2,H-padB+6*dpr);
     }
@@ -452,14 +574,14 @@ function drawChart(){
     const bx = W - padR + 8*dpr;
     const by = g.y - boxH/2;
 
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fillStyle = paper;
     ctx.strokeStyle = '#cbd5e1';
     ctx.lineWidth = 1*dpr;
     roundRect(ctx, bx, by, boxW, boxH, 4*dpr, true, true);
     ctx.fillStyle = g.color;
     ctx.fillRect(bx, by, 3*dpr, boxH);
 
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = ink;
     ctx.textBaseline='middle'; ctx.textAlign='left';
     ctx.fillText(g.text, bx + labelPadX + 3*dpr, g.y);
   });
@@ -498,29 +620,63 @@ function saveState(){
   try{
     const payload={
       lang,
-      laps:laps.map(l=>({ms:l.ms,note:l.note||''})),
+      theme,
+      laps:laps.map(l=>({ms:l.ms,note:l.note||'',abnormal:!!l.abnormal})),
       process:processInput.value||'',
+      subprocess:subprocessInput.value||'',
       date:dateInput.value||'',
-      takt:Number(taktInput.value)||0
+      takt:Number(taktInput.value)||0,
+      product:productInput.value||'',
+      boundary:boundaryInput.value||''
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }catch(err){ console.warn('Failed to save state', err); }
 }
 function loadState(){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY);
+    const raw=localStorage.getItem(STORAGE_KEY)||localStorage.getItem(LEGACY_STORAGE_KEY);
     if(!raw) return;
     const stored=JSON.parse(raw);
     if(stored && typeof stored==='object'){
       if(stored.lang && L[stored.lang]) lang=stored.lang;
+      if(['auto','light','dark'].includes(stored.theme)) theme=stored.theme;
       if(Array.isArray(stored.laps)){
-        laps=stored.laps.map(item=>({ms:Number(item.ms)||0,note:item.note||''})).filter(item=>item.ms>0);
+        laps=stored.laps.map(item=>({ms:Number(item.ms)||0,note:item.note||'',abnormal:!!item.abnormal})).filter(item=>item.ms>0);
       }
       if(typeof stored.process==='string') processInput.value=stored.process;
+      if(typeof stored.subprocess==='string') subprocessInput.value=stored.subprocess;
       if(typeof stored.date==='string') dateInput.value=stored.date;
       if(typeof stored.takt==='number') taktInput.value = stored.takt || '';
+      if(typeof stored.product==='string') productInput.value=stored.product;
+      if(typeof stored.boundary==='string') boundaryInput.value=stored.boundary;
     }
   }catch(err){ console.warn('Failed to load state', err); }
+}
+
+function applyTheme(){
+  const resolved=theme==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):theme;
+  document.documentElement.dataset.theme=resolved;
+  document.querySelector('meta[name="theme-color"]').content=resolved==='dark'?'#0b1020':'#ffffff';
+  $('#btnTheme').textContent=theme==='auto'?'◐':(theme==='dark'?'☾':'☀');
+  drawChart();
+}
+function toggleTheme(){
+  theme=theme==='auto'?'light':(theme==='light'?'dark':'auto');
+  applyTheme(); saveState();
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{ if(theme==='auto') applyTheme(); });
+
+function rememberSubprocess(){
+  const value=subprocessInput.value.trim(); if(!value) return;
+  try{
+    const list=JSON.parse(localStorage.getItem(SUBPROCESS_HISTORY_KEY)||'[]');
+    localStorage.setItem(SUBPROCESS_HISTORY_KEY,JSON.stringify([value,...list.filter(x=>x!==value)].slice(0,20)));
+  }catch(e){}
+  renderSubprocessOptions();
+}
+function renderSubprocessOptions(){
+  let list=[]; try{ list=JSON.parse(localStorage.getItem(SUBPROCESS_HISTORY_KEY)||'[]'); }catch(e){}
+  $('#subprocessOptions').innerHTML=list.map(x=>`<option value="${String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"></option>`).join('');
 }
 
 /* ===== Språkknapp ===== */
@@ -534,15 +690,18 @@ function toggleLanguage(){
 function buildCSVBlob() {
   const rows=[];
   rows.push(['Process', processInput.value||'']);
+  rows.push(['Subprocess', subprocessInput.value||'']);
+  rows.push(['Article / variant', productInput.value||'']);
+  rows.push(['Measurement boundary', boundaryInput.value||'']);
   rows.push(['Date', dateInput.value||'']);
   rows.push(['Takt (s)', Number(taktInput.value)||0]);
   rows.push([]);
-  rows.push(['Cycle','ms','sec','Notes']);
+  rows.push(['Cycle','ms','sec','Deviation','Notes']);
   laps.forEach((lap,i)=>{
-    rows.push([`${i+1}`, lap.ms, formatSecondsForCSV(lap.ms), (lap.note||'').replace(/\n/g,' ')]);
+    rows.push([`${i+1}`, Math.round(lap.ms), formatSecondsForCSV(lap.ms), lap.abnormal?'1':'0', (lap.note||'').replace(/\n/g,' ')]);
   });
-  const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  return new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  return new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8;'});
 }
 function downloadBlob(blob, filename){
   const url=URL.createObjectURL(blob);
@@ -568,6 +727,8 @@ async function shareOrDownloadFile(blob, filename, mime, preferShare=true){
 
 /* ===== Export CSV ===== */
 async function exportCSV(){
+  if(!laps.length){ showToast(L[lang].NO_DATA); return; }
+  rememberSubprocess();
   const stamp = new Date().toISOString().slice(0,10);
   const blob = buildCSVBlob();
   const filename = `20-cycle-check-${stamp}.csv`;
@@ -580,6 +741,8 @@ async function exportCSV(){
 
 /* ===== Export PDF-rapport (A4 liggande) ===== */
 async function exportReport(){
+  if(!laps.length){ showToast(L[lang].NO_DATA); return; }
+  rememberSubprocess();
   drawChart();
 
   const { jsPDF } = window.jspdf;
@@ -596,7 +759,8 @@ async function exportReport(){
   pdf.text('20 Cycle Check', x, y+5);
   pdf.setFont('helvetica','normal'); pdf.setFontSize(11);
   pdf.text((lang==='sv'?'Process: ':'Process: ') + (processInput.value||'—'), x+70, y+5);
-  pdf.text((lang==='sv'?'Datum: ':'Date: ') + (dateInput.value||'—'), x+140, y+5);
+  pdf.text((lang==='sv'?'Underprocess: ':'Subprocess: ') + (subprocessInput.value||'—'), x+140, y+5);
+  pdf.text((lang==='sv'?'Datum: ':'Date: ') + (dateInput.value||'—'), pageW-M-48, y+5);
   y += 20;
 
   const canvas = document.getElementById('chart');
@@ -611,7 +775,7 @@ async function exportReport(){
 
   const arr = laps.map(l=>l.ms);
   const avg = (arr.length? arr.reduce((a,b)=>a+b,0)/arr.length : 0);
-  const br = (arr.length>=5? [...arr].sort((x,y)=>x-y).slice(0,5).reduce((a,b)=>a+b,0)/5 : null);
+  const br = brctMs(arr);
   const longest = arr.length? Math.max(...arr):0;
   const shortest = arr.length? Math.min(...arr):0;
   const dPct = (avg>0 && br!==null) ? ((avg - br)/avg*100) : 0;
@@ -635,6 +799,8 @@ async function exportReport(){
   kpi(lab.SHORTEST, arr.length?fmt(shortest):'–');
   kpi(lab.TAKT_LABEL, taktVal>0? (taktVal+'s') : '–');
   kpi(lab.DISTURBANCE, dPct.toFixed(1)+'%');
+  kpi(lab.KPI_SIGMA, arr.length>1?fmt(standardDeviation(arr)):'–');
+  kpi(lab.DEVIATION, `${laps.filter(l=>l.abnormal).length} / ${laps.length}`);
 
   ry += 4;
 
@@ -662,8 +828,35 @@ async function exportReport(){
   const timesToShow = Math.min(maxRows, laps.length);
   for(let i=0;i<timesToShow;i++){
     const l = laps[i];
-    row(rightX, ry, [i+1, fmt(l.ms), (l.note||'')], false);
+    row(rightX, ry, [i+1, fmt(l.ms), `${l.abnormal?'[AVV] ':''}${l.note||''}`], false);
     ry += rowH;
+  }
+
+  if(timesToShow<laps.length){
+    pdf.addPage();
+    let ty=M;
+    const tableW=pageW-2*M, nW=18, tW=32, dW=28;
+    function tableHeader(){
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(15,23,42);
+      pdf.text(lang==='sv'?'Samtliga cykler':'All cycles',M,ty); ty+=8;
+      pdf.setFontSize(10);
+      pdf.text(lang==='sv'?'Nr':'No',M+2,ty+4);
+      pdf.text(lang==='sv'?'Tid':'Time',M+nW+2,ty+4);
+      pdf.text(lang==='sv'?'Avvikelse':'Deviation',M+nW+tW+2,ty+4);
+      pdf.text(lang==='sv'?'Anteckning':'Notes',M+nW+tW+dW+2,ty+4);
+      pdf.line(M,ty+rowH,M+tableW,ty+rowH); ty+=rowH;
+    }
+    tableHeader();
+    for(let i=timesToShow;i<laps.length;i++){
+      if(ty+rowH>pageH-M){ pdf.addPage(); ty=M; tableHeader(); }
+      const l=laps[i];
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
+      pdf.text(String(i+1),M+2,ty+4);
+      pdf.text(fmt(l.ms),M+nW+2,ty+4);
+      pdf.text(l.abnormal?(lang==='sv'?'Ja':'Yes'):(lang==='sv'?'Nej':'No'),M+nW+tW+2,ty+4);
+      pdf.text(String(l.note||'').substring(0,110),M+nW+tW+dW+2,ty+4,{maxWidth:tableW-nW-tW-dW-4});
+      pdf.setDrawColor(229,231,235); pdf.line(M,ty+rowH,M+tableW,ty+rowH); ty+=rowH;
+    }
   }
 
   pdf.setFontSize(9); pdf.setTextColor(107,114,128);
@@ -683,8 +876,8 @@ async function exportReport(){
 /* ===== Reset ===== */
 function resetApp(){
   if(!confirm(lang==='sv'?'Är du säker på att du vill nollställa?':'Are you sure you want to reset?')) return;
-  if(running){ stopTimer(); }
-  laps=[]; selectedIndex=-1; processInput.value=''; dateInput.value=''; taktInput.value='';
+  if(running){ cancelCurrentTimer(); }
+  laps=[]; selectedIndex=-1; processInput.value=''; subprocessInput.value=''; dateInput.value=new Date().toISOString().slice(0,10); taktInput.value=''; productInput.value=''; boundaryInput.value='';
   refreshUI();
 }
 
@@ -721,17 +914,24 @@ function refreshUI(){
 /* ===== Init ===== */
 function init(){
   loadState();
+  if(!dateInput.value) dateInput.value=new Date().toISOString().slice(0,10);
+  applyTheme();
+  renderSubprocessOptions();
   setLangTexts();
   refreshUI();
-  stopBtn.disabled=true;
   timerDisp.textContent='00:00.00';
 
   document.getElementById('btnLang').addEventListener('click', toggleLanguage);
+  document.getElementById('btnTheme').addEventListener('click', toggleTheme);
   document.getElementById('btnExport').addEventListener('click', exportCSV);
   document.getElementById('btnReport').addEventListener('click', exportReport);
   document.getElementById('btnReset').addEventListener('click', resetApp);
   processInput.addEventListener('input', saveState);
+  subprocessInput.addEventListener('input', saveState);
+  subprocessInput.addEventListener('change', rememberSubprocess);
   dateInput.addEventListener('input', saveState);
+  productInput.addEventListener('input', saveState);
+  boundaryInput.addEventListener('input', saveState);
   taktInput.addEventListener('input', ()=>{ saveState(); drawChart(); });
   window.addEventListener('resize', ()=>{ drawChart(); });
 
@@ -740,6 +940,7 @@ function init(){
   drawChart();
 }
 document.addEventListener('DOMContentLoaded', init);
+window.addEventListener('beforeunload',e=>{ if(running){ e.preventDefault(); e.returnValue=''; } });
 </script>
 </body>
 </html>
