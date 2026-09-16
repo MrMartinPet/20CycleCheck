@@ -33,6 +33,7 @@
   }
   .flag{font-size:16px;line-height:1}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:inherit;cursor:pointer;touch-action:manipulation}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
   .btn.primary{background:var(--blue-600);color:#fff;border-color:#1d4ed8}
   .btn.secondary{background:var(--paper);border-color:var(--line)}
   .btn.danger{background:#fee2e2;border-color:#fecaca}
@@ -49,7 +50,7 @@
   .study-details summary{cursor:pointer;color:var(--muted);font-weight:700}
   .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 
-  .timer-card .controls{display:grid;grid-template-columns:minmax(150px,1fr) minmax(140px,.8fr);gap:8px;align-items:center}
+  .timer-card .controls{display:grid;grid-template-columns:minmax(150px,1fr) minmax(140px,.8fr) minmax(90px,.45fr);gap:8px;align-items:center}
   .timer-card .controls > *{min-width:0}
   .timer-card .mid{display:flex;justify-content:center}
   .timer{font-weight:800;font-size:18px;background:#0a0;color:#fff;padding:10px 12px;border-radius:8px;text-align:center;min-width:0;width:100%}
@@ -104,7 +105,7 @@
     .list-row .problems{grid-area:problems}
     .list-row .delete-cell{grid-area:delete;text-align:right}
     .timer-card{position:fixed;z-index:20;left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));box-shadow:0 12px 30px rgba(0,0,0,.28)}
-    .timer-card .controls{grid-template-columns:1.25fr .75fr;gap:6px}
+    .timer-card .controls{grid-template-columns:1.1fr .75fr .55fr;gap:6px}
     .timer-card .btn{min-height:58px;font-size:20px!important}
     .timer{font-size:20px;padding:16px 8px}
     canvas{height:260px}
@@ -173,6 +174,7 @@
       <div class="controls">
         <div class="start"><button id="btnToggle" class="btn primary" style="width:100%;font-size:16px;padding:12px 14px">Start</button></div>
         <div class="mid"><div class="timer" id="timerDisp">00:00.00</div></div>
+        <div class="stop"><button id="btnStop" class="btn secondary" style="width:100%" disabled>Stoppa</button></div>
       </div>
     </div>
   </div>
@@ -218,7 +220,7 @@
 const L={
   sv:{PROCESS:"PROCESS",SUBPROCESS:"UNDERPROCESS",DATE:"DATUM",PH_PROCESS:"Ange processnamn…",PH_SUBPROCESS:"Välj eller skriv…",PH_DATE:"yyyy-mm-dd",
       TAKT:"TAKT", PH_TAKT:"sek", TAKT_LABEL:"Kundtakt:",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Spara cykel",RESET:"Nollställ",EXPORT:"Excel",REPORT:"PDF",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Spara cykel",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Excel",REPORT:"PDF",
       RESULTS_TITLE:"Resultat",
       KPI_PROGRESS:"Cykler",KPI_AVG:"Ø CT (medel)",KPI_BRCT:"BRCT (5 snabbaste)",KPI_DIST:"Störningsgrad",KPI_SIGMA:"Standardavvikelse",KPI_TAKT:"Över takt",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:",",
@@ -233,7 +235,7 @@ const L={
   },
   en:{PROCESS:"PROCESS",SUBPROCESS:"SUBPROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_SUBPROCESS:"Choose or type…",PH_DATE:"yyyy-mm-dd",
       TAKT:"TAKT", PH_TAKT:"sec", TAKT_LABEL:"Takt:",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Save cycle",RESET:"Reset",EXPORT:"Excel",REPORT:"PDF",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Save cycle",STOP:"Stop",RESET:"Reset",EXPORT:"Excel",REPORT:"PDF",
       RESULTS_TITLE:"Results",
       KPI_PROGRESS:"Cycles",KPI_AVG:"Ø CT (mean)",KPI_BRCT:"BRCT (5 fastest)",KPI_DIST:"Disturbance rate",KPI_SIGMA:"Standard deviation",KPI_TAKT:"Above takt",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:".",
@@ -269,7 +271,7 @@ let rafId=null;
 /* ===== UI refs ===== */
 const processInput=$('#process'), subprocessInput=$('#subprocess'), dateInput=$('#date'), taktInput=$('#takt');
 const productInput=$('#product'), boundaryInput=$('#boundary');
-const toggleBtn=$('#btnToggle'), timerDisp=$('#timerDisp');
+const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp');
 const chart=$('#chart');
 
 /* ===== i18n apply ===== */
@@ -302,6 +304,7 @@ function setLangTexts(){
   $('#thDeviation').textContent=L[lang].DEVIATION;
   $('#thProblems').textContent=L[lang].PROBLEMS;
   toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
+  stopBtn.textContent = L[lang].STOP;
   $('#langLabel').textContent = lang==='sv'?'SV':'EN';
   $('#btnLang').querySelector('.flag').textContent = lang==='sv'?'🇸🇪':'🇬🇧';
   document.getElementById('btnCalcTakt').textContent = L[lang].CALC_TAKT_BTN; /* NEW */
@@ -318,6 +321,7 @@ function startTimer(){
   if(tick) clearInterval(tick);
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
   toggleBtn.textContent=L[lang].TOGGLE_LAP;
+  stopBtn.disabled=false;
   requestWakeLock();
   startLoop();
 }
@@ -340,11 +344,13 @@ function cancelCurrentTimer(){
     toggleBtn.textContent=L[lang].TOGGLE_START;
   }
   timerDisp.textContent='00:00.00';
+  stopBtn.disabled=true;
   stopLoop();
   releaseWakeLock();
 }
 function toggle(){ running ? lap() : startTimer(); }
 toggleBtn.addEventListener('click', toggle);
+stopBtn.addEventListener('click', cancelCurrentTimer);
 
 async function requestWakeLock(){
   try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
@@ -363,6 +369,10 @@ window.addEventListener('keydown', e=>{
     if(tag==='TEXTAREA' || (tag==='INPUT' && (ae.type||'').toLowerCase()!=='button')) return;
     e.preventDefault();
     running ? lap() : startTimer();
+  }
+  if(e.key && e.key.toLowerCase()==='s' && tag!=='TEXTAREA' && tag!=='INPUT'){
+    e.preventDefault();
+    cancelCurrentTimer();
   }
   if(e.key==='Delete' || e.key==='Backspace'){
     if(tag==='TEXTAREA' || tag==='INPUT'){ return; }
@@ -920,6 +930,7 @@ function init(){
   setLangTexts();
   refreshUI();
   timerDisp.textContent='00:00.00';
+  stopBtn.disabled=true;
 
   document.getElementById('btnLang').addEventListener('click', toggleLanguage);
   document.getElementById('btnTheme').addEventListener('click', toggleTheme);
