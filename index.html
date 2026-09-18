@@ -77,6 +77,7 @@
   .list-row.ct-orange{border-left:6px solid #f59e0b;background:color-mix(in srgb,#f59e0b 10%,var(--paper))}
   .list-row.ct-red{border-left:6px solid #dc2626;background:color-mix(in srgb,#dc2626 10%,var(--paper))}
   .badge{display:inline-block;background:#e2e8f0;color:#334155;padding:4px 8px;border-radius:999px;font-size:var(--fs-sm);font-weight:600}
+  .active-tag{display:none;margin-left:5px;padding:3px 6px;border-radius:999px;background:#2563eb;color:#fff;font-size:10px;font-weight:800}
   textarea{width:100%;min-height:42px;border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--paper);color:var(--ink);font:inherit;font-size:16px}
   .flag-btn{min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--muted);font-weight:700;cursor:pointer}
   .flag-btn.active{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
@@ -112,6 +113,8 @@
     .list-row .pieces-cell{grid-area:pieces}
     .list-row .problems{grid-area:problems}
     .list-row .delete-cell{grid-area:delete;text-align:right}
+    .list-row.active-cycle{order:-1}
+    .list-row.active-cycle .active-tag{display:inline-block}
     .timer-card{position:fixed;z-index:20;left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));box-shadow:0 12px 30px rgba(0,0,0,.28)}
     .timer-card .controls{grid-template-columns:1fr .72fr .55fr;gap:6px}
     .timer-card .btn{min-height:58px;font-size:20px!important}
@@ -232,7 +235,7 @@ const L={
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:",",
       LONGEST:"Längsta CT:", SHORTEST:"Kortaste CT:", DISTURBANCE:"D %:",
       PRODUCT:"ARTIKEL / VARIANT",BOUNDARY:"MÄTGRÄNS",DETAILS:"Mätdetaljer (valfritt)",PH_PRODUCT:"Artikel, familj eller variant",PH_BOUNDARY:"Startpunkt → slutpunkt",
-      CYCLE:"CYKEL",TIME:"TID",PIECES:"RUTOR",PROBLEMS:"AVVIKELSE / KOMMENTAR",NOTE_PLACEHOLDER:"Egen kommentar (valfritt)",THEME:"Tema",QUALITY:"Kvalitetsproblem / kontroll",CHANGEOVER:"Ställtid",MACHINE:"Maskinfel",OTHER:"Annat",
+      CYCLE:"CYKEL",TIME:"TID",PIECES:"RUTOR",PROBLEMS:"AVVIKELSE / KOMMENTAR",ACTIVE:"AKTIV",NOTE_PLACEHOLDER:"Egen kommentar (valfritt)",THEME:"Tema",QUALITY:"Kvalitetsproblem / kontroll",CHANGEOVER:"Ställtid",MACHINE:"Maskinfel",OTHER:"Annat",
       COMPLETE:"20 cykler klara",DELETED:"Cykel raderad",UNDO:"Ångra",NO_DATA:"Inga cykler att exportera.",
       CALC_TAKT_BTN:"Beräkna", /* NEW */
       PROMPT_VOLUME:"Ange årsvolym (antal enheter/år):", /* NEW */
@@ -247,7 +250,7 @@ const L={
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:".",
       LONGEST:"Longest CT:", SHORTEST:"Shortest CT:", DISTURBANCE:"D %:",
       PRODUCT:"ARTICLE / VARIANT",BOUNDARY:"MEASUREMENT BOUNDARY",DETAILS:"Study details (optional)",PH_PRODUCT:"Article, family or variant",PH_BOUNDARY:"Start point → end point",
-      CYCLE:"CYCLE",TIME:"TIME",PIECES:"PANELS",PROBLEMS:"DEVIATION / COMMENT",NOTE_PLACEHOLDER:"Own comment (optional)",THEME:"Theme",QUALITY:"Quality problem / inspection",CHANGEOVER:"Changeover",MACHINE:"Machine fault",OTHER:"Other",
+      CYCLE:"CYCLE",TIME:"TIME",PIECES:"PANELS",PROBLEMS:"DEVIATION / COMMENT",ACTIVE:"ACTIVE",NOTE_PLACEHOLDER:"Own comment (optional)",THEME:"Theme",QUALITY:"Quality problem / inspection",CHANGEOVER:"Changeover",MACHINE:"Machine fault",OTHER:"Other",
       COMPLETE:"20 cycles completed",DELETED:"Cycle deleted",UNDO:"Undo",NO_DATA:"No cycles to export.",
       CALC_TAKT_BTN:"Calculate", /* NEW */
       PROMPT_VOLUME:"Enter annual volume (units/year):", /* NEW */
@@ -429,11 +432,12 @@ function renderList(){
   if(window.innerWidth<=640) entries.reverse();
   entries.forEach(({l,i})=>{
     const row=document.createElement('div'); row.className='list-row';
+    if(i===laps.length-1) row.classList.add('active-cycle');
     if(i===selectedIndex) row.classList.add('selected');
     const standardMs=Number(taktInput.value||0)*1000;
     if(standardMs>0) row.classList.add(l.ms<=standardMs?'ct-green':(l.ms<=standardMs*1.2?'ct-orange':'ct-red'));
     row.innerHTML=
-      `<div class="cell cycle"><span class="badge">${i+1}</span></div>
+      `<div class="cell cycle"><span class="badge">${i+1}</span><span class="active-tag">${L[lang].ACTIVE}</span></div>
        <div class="cell time"><b>${formatMs(l.ms)}</b></div>
        <div class="pieces-cell"><div class="piece-toggle"><button class="choice ${l.pieces===1?'active':''}" data-pieces="1" data-ix="${i}">${lang==='sv'?'1 ruta':'1 panel'}</button><button class="choice ${l.pieces===2?'active':''}" data-pieces="2" data-ix="${i}">${lang==='sv'?'2 rutor':'2 panels'}</button></div></div>
        <div class="cell problems">
