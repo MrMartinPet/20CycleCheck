@@ -50,7 +50,7 @@
   .study-details summary{cursor:pointer;color:var(--muted);font-weight:700}
   .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 
-  .timer-card .controls{display:grid;grid-template-columns:minmax(150px,1fr) minmax(140px,.8fr) minmax(90px,.45fr);gap:8px;align-items:center}
+  .timer-card .controls{display:grid;grid-template-columns:minmax(170px,1fr) minmax(140px,.8fr);gap:8px;align-items:center}
   .timer-card .controls > *{min-width:0}
   .timer-card .mid{display:flex;justify-content:center}
   .timer{font-weight:800;font-size:18px;background:#0a0;color:#fff;padding:10px 12px;border-radius:8px;text-align:center;min-width:0;width:100%}
@@ -65,7 +65,7 @@
   .chart-wrap{padding:6px}
   canvas{width:100%;height:360px;display:block}
 
-  .list-head,.list-row{display:grid;grid-template-columns:50px 100px 76px 1fr 40px;gap:8px;align-items:center}
+  .list-head,.list-row{display:grid;grid-template-columns:48px 92px 110px 1fr 40px;gap:8px;align-items:center}
   .list-head{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:8px;font-weight:700;z-index:1}
   .list{max-height:460px;overflow:auto;border-top:1px solid var(--line);padding:8px}
   .list-row{
@@ -77,6 +77,11 @@
   textarea{width:100%;min-height:42px;border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--paper);color:var(--ink);font:inherit;font-size:16px}
   .flag-btn{min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--muted);font-weight:700;cursor:pointer}
   .flag-btn.active{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+  .piece-toggle,.reason-toggle{display:flex;gap:5px;flex-wrap:wrap}
+  .choice{min-height:38px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-weight:700;cursor:pointer}
+  .choice.active{background:var(--blue-600);border-color:var(--blue-600);color:#fff}
+  .reason-toggle{margin-bottom:6px}.reason-toggle .choice{font-size:12px;font-weight:600}
+  .shortcut-help{text-align:center;color:var(--muted);font-size:12px;margin-top:6px}
   .delete-btn{cursor:pointer;border:none;background:none;font-size:18px;line-height:1;color:#dc2626}
   .delete-btn:hover{color:#b91c1c}
 
@@ -96,16 +101,16 @@
     .list{max-height:none;padding:8px}
     .list-row{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:
       "cycle time"
-      "flag flag"
+      "pieces pieces"
       "problems problems"
       "delete delete"}
     .list-row .cycle{grid-area:cycle}
     .list-row .time{grid-area:time}
-    .list-row .flag-cell{grid-area:flag}
+    .list-row .pieces-cell{grid-area:pieces}
     .list-row .problems{grid-area:problems}
     .list-row .delete-cell{grid-area:delete;text-align:right}
     .timer-card{position:fixed;z-index:20;left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));box-shadow:0 12px 30px rgba(0,0,0,.28)}
-    .timer-card .controls{grid-template-columns:1.1fr .75fr .55fr;gap:6px}
+    .timer-card .controls{grid-template-columns:1.15fr .85fr;gap:6px}
     .timer-card .btn{min-height:58px;font-size:20px!important}
     .timer{font-size:20px;padding:16px 8px}
     canvas{height:260px}
@@ -174,8 +179,8 @@
       <div class="controls">
         <div class="start"><button id="btnToggle" class="btn primary" style="width:100%;font-size:16px;padding:12px 14px">Start</button></div>
         <div class="mid"><div class="timer" id="timerDisp">00:00.00</div></div>
-        <div class="stop"><button id="btnStop" class="btn secondary" style="width:100%" disabled>Stoppa</button></div>
       </div>
+      <div id="shortcutHelp" class="shortcut-help">Tips: tryck mellanslag (Space) för nästa cykel</div>
     </div>
   </div>
 
@@ -189,8 +194,8 @@
           <div class="pill"><span id="kpiAvgLabel"></span> <b id="kpiAvg">00:00.00</b></div>
           <div class="pill"><span id="kpiBrctLabel"></span> <b id="kpiBrct">–</b></div>
           <div class="pill"><span id="kpiDistLabel"></span> <b id="kpiDist">–</b></div>
-          <div class="pill"><span id="kpiSigmaLabel"></span> <b id="kpiSigma">–</b></div>
-          <div class="pill"><span id="kpiTaktLabel"></span> <b id="kpiTakt">–</b></div>
+          <div class="pill"><span id="kpiOneLabel"></span> <b id="kpiOne">–</b></div>
+          <div class="pill"><span id="kpiTwoLabel"></span> <b id="kpiTwo">–</b></div>
         </div>
       </div>
       <div class="chart-wrap">
@@ -202,7 +207,7 @@
       <div class="list-head">
         <div id="thCycle">CYCLE</div>
         <div id="thTime">TIME(S)</div>
-        <div id="thDeviation">AVV.</div>
+        <div id="thPieces">RUTOR</div>
         <div id="thProblems">OBSERVED PROBLEMS</div>
         <div> </div>
       </div>
@@ -220,13 +225,13 @@
 const L={
   sv:{PROCESS:"PROCESS",SUBPROCESS:"UNDERPROCESS",DATE:"DATUM",PH_PROCESS:"Ange processnamn…",PH_SUBPROCESS:"Välj eller skriv…",PH_DATE:"yyyy-mm-dd",
       TAKT:"TAKT", PH_TAKT:"sek", TAKT_LABEL:"Kundtakt:",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Spara cykel",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Excel",REPORT:"PDF",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Nästa cykel",RESET:"Nollställ",EXPORT:"Excel",REPORT:"PDF",SHORTCUT:"Tips: tryck mellanslag (Space) för nästa cykel",
       RESULTS_TITLE:"Resultat",
-      KPI_PROGRESS:"Cykler",KPI_AVG:"Ø CT (medel)",KPI_BRCT:"BRCT (5 snabbaste)",KPI_DIST:"Störningsgrad",KPI_SIGMA:"Standardavvikelse",KPI_TAKT:"Över takt",
+      KPI_PROGRESS:"Cykler",KPI_AVG:"Ø CT (medel)",KPI_BRCT:"BRCT (5 snabbaste)",KPI_DIST:"Störningsgrad",KPI_ONE:"Ø CT · 1 ruta",KPI_TWO:"Ø CT · 2 rutor",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:",",
       LONGEST:"Längsta CT:", SHORTEST:"Kortaste CT:", DISTURBANCE:"D %:",
       PRODUCT:"ARTIKEL / VARIANT",BOUNDARY:"MÄTGRÄNS",DETAILS:"Mätdetaljer (valfritt)",PH_PRODUCT:"Artikel, familj eller variant",PH_BOUNDARY:"Startpunkt → slutpunkt",
-      CYCLE:"CYKEL",TIME:"TID",DEVIATION:"AVV.",PROBLEMS:"NOTERING / PROBLEM",FLAG:"Avvikelse",NOTE_PLACEHOLDER:"Notering eller observerat problem",THEME:"Tema",
+      CYCLE:"CYKEL",TIME:"TID",PIECES:"RUTOR",PROBLEMS:"AVVIKELSE / KOMMENTAR",NOTE_PLACEHOLDER:"Egen kommentar (valfritt)",THEME:"Tema",QUALITY:"Kvalitetsproblem / kontroll",CHANGEOVER:"Ställtid",OTHER:"Annat",
       COMPLETE:"20 cykler klara",DELETED:"Cykel raderad",UNDO:"Ångra",NO_DATA:"Inga cykler att exportera.",
       CALC_TAKT_BTN:"Beräkna", /* NEW */
       PROMPT_VOLUME:"Ange årsvolym (antal enheter/år):", /* NEW */
@@ -235,13 +240,13 @@ const L={
   },
   en:{PROCESS:"PROCESS",SUBPROCESS:"SUBPROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_SUBPROCESS:"Choose or type…",PH_DATE:"yyyy-mm-dd",
       TAKT:"TAKT", PH_TAKT:"sec", TAKT_LABEL:"Takt:",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Save cycle",STOP:"Stop",RESET:"Reset",EXPORT:"Excel",REPORT:"PDF",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Next cycle",RESET:"Reset",EXPORT:"Excel",REPORT:"PDF",SHORTCUT:"Tip: press Space for the next cycle",
       RESULTS_TITLE:"Results",
-      KPI_PROGRESS:"Cycles",KPI_AVG:"Ø CT (mean)",KPI_BRCT:"BRCT (5 fastest)",KPI_DIST:"Disturbance rate",KPI_SIGMA:"Standard deviation",KPI_TAKT:"Above takt",
+      KPI_PROGRESS:"Cycles",KPI_AVG:"Ø CT (mean)",KPI_BRCT:"BRCT (5 fastest)",KPI_DIST:"Disturbance rate",KPI_ONE:"Ø CT · 1 panel",KPI_TWO:"Ø CT · 2 panels",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:".",
       LONGEST:"Longest CT:", SHORTEST:"Shortest CT:", DISTURBANCE:"D %:",
       PRODUCT:"ARTICLE / VARIANT",BOUNDARY:"MEASUREMENT BOUNDARY",DETAILS:"Study details (optional)",PH_PRODUCT:"Article, family or variant",PH_BOUNDARY:"Start point → end point",
-      CYCLE:"CYCLE",TIME:"TIME",DEVIATION:"DEV.",PROBLEMS:"NOTE / PROBLEM",FLAG:"Deviation",NOTE_PLACEHOLDER:"Note or observed problem",THEME:"Theme",
+      CYCLE:"CYCLE",TIME:"TIME",PIECES:"PANELS",PROBLEMS:"DEVIATION / COMMENT",NOTE_PLACEHOLDER:"Own comment (optional)",THEME:"Theme",QUALITY:"Quality problem / inspection",CHANGEOVER:"Changeover",OTHER:"Other",
       COMPLETE:"20 cycles completed",DELETED:"Cycle deleted",UNDO:"Undo",NO_DATA:"No cycles to export.",
       CALC_TAKT_BTN:"Calculate", /* NEW */
       PROMPT_VOLUME:"Enter annual volume (units/year):", /* NEW */
@@ -261,7 +266,7 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[];
 let running=false, tStart=0, tick=null;
 let selectedIndex=-1;
-const STORAGE_KEY='cycle-check-state-v7';
+const STORAGE_KEY='cycle-check-state-v8';
 const LEGACY_STORAGE_KEY='cycle-check-state-v6';
 const SUBPROCESS_HISTORY_KEY='cycle-check-subprocesses-v1';
 let theme='auto', wakeLock=null, deletedLap=null, toastTimer=null;
@@ -271,7 +276,7 @@ let rafId=null;
 /* ===== UI refs ===== */
 const processInput=$('#process'), subprocessInput=$('#subprocess'), dateInput=$('#date'), taktInput=$('#takt');
 const productInput=$('#product'), boundaryInput=$('#boundary');
-const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp');
+const toggleBtn=$('#btnToggle'), timerDisp=$('#timerDisp');
 const chart=$('#chart');
 
 /* ===== i18n apply ===== */
@@ -292,8 +297,8 @@ function setLangTexts(){
   $('#kpiAvgLabel').textContent=L[lang].KPI_AVG;
   $('#kpiBrctLabel').textContent=L[lang].KPI_BRCT;
   $('#kpiDistLabel').textContent=L[lang].KPI_DIST;
-  $('#kpiSigmaLabel').textContent=L[lang].KPI_SIGMA;
-  $('#kpiTaktLabel').textContent=L[lang].KPI_TAKT;
+  $('#kpiOneLabel').textContent=L[lang].KPI_ONE;
+  $('#kpiTwoLabel').textContent=L[lang].KPI_TWO;
   $('#lblProduct').textContent=L[lang].PRODUCT;
   $('#lblBoundary').textContent=L[lang].BOUNDARY;
   $('#detailsSummary').textContent=L[lang].DETAILS;
@@ -301,10 +306,10 @@ function setLangTexts(){
   boundaryInput.placeholder=L[lang].PH_BOUNDARY;
   $('#thCycle').textContent=L[lang].CYCLE;
   $('#thTime').textContent=L[lang].TIME;
-  $('#thDeviation').textContent=L[lang].DEVIATION;
+  $('#thPieces').textContent=L[lang].PIECES;
   $('#thProblems').textContent=L[lang].PROBLEMS;
   toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
-  stopBtn.textContent = L[lang].STOP;
+  $('#shortcutHelp').textContent=L[lang].SHORTCUT;
   $('#langLabel').textContent = lang==='sv'?'SV':'EN';
   $('#btnLang').querySelector('.flag').textContent = lang==='sv'?'🇸🇪':'🇬🇧';
   document.getElementById('btnCalcTakt').textContent = L[lang].CALC_TAKT_BTN; /* NEW */
@@ -321,7 +326,6 @@ function startTimer(){
   if(tick) clearInterval(tick);
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
   toggleBtn.textContent=L[lang].TOGGLE_LAP;
-  stopBtn.disabled=false;
   requestWakeLock();
   startLoop();
 }
@@ -331,7 +335,7 @@ function lap(){
   const elapsed = Math.max(10, now - tStart);
   tStart = now;
   timerDisp.textContent = '00:00.00';
-  laps.push({ms: elapsed, note: '', abnormal:false});
+  laps.push({ms: elapsed, note: '', pieces:1, reason:''});
   selectedIndex = laps.length - 1;
   if(navigator.vibrate) navigator.vibrate(25);
   if(laps.length===20) showToast(L[lang].COMPLETE);
@@ -344,13 +348,11 @@ function cancelCurrentTimer(){
     toggleBtn.textContent=L[lang].TOGGLE_START;
   }
   timerDisp.textContent='00:00.00';
-  stopBtn.disabled=true;
   stopLoop();
   releaseWakeLock();
 }
 function toggle(){ running ? lap() : startTimer(); }
 toggleBtn.addEventListener('click', toggle);
-stopBtn.addEventListener('click', cancelCurrentTimer);
 
 async function requestWakeLock(){
   try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
@@ -421,12 +423,13 @@ function renderList(){
   laps.forEach((l,i)=>{
     const row=document.createElement('div'); row.className='list-row';
     if(i===selectedIndex) row.classList.add('selected');
-    if(l.abnormal) row.classList.add('abnormal');
+    if(l.reason || l.note) row.classList.add('abnormal');
     row.innerHTML=
       `<div class="cell cycle"><span class="badge">${i+1}</span></div>
        <div class="cell time"><b>${formatMs(l.ms)}</b></div>
-       <div class="flag-cell"><button class="flag-btn ${l.abnormal?'active':''}" type="button" data-flag-ix="${i}" aria-pressed="${l.abnormal?'true':'false'}">${L[lang].FLAG}</button></div>
+       <div class="pieces-cell"><div class="piece-toggle"><button class="choice ${l.pieces===1?'active':''}" data-pieces="1" data-ix="${i}">${lang==='sv'?'1 ruta':'1 panel'}</button><button class="choice ${l.pieces===2?'active':''}" data-pieces="2" data-ix="${i}">${lang==='sv'?'2 rutor':'2 panels'}</button></div></div>
        <div class="cell problems">
+         <div class="reason-toggle"><button class="choice ${l.reason==='quality'?'active':''}" data-reason="quality" data-ix="${i}">${L[lang].QUALITY}</button><button class="choice ${l.reason==='changeover'?'active':''}" data-reason="changeover" data-ix="${i}">${L[lang].CHANGEOVER}</button><button class="choice ${l.reason==='other'?'active':''}" data-reason="other" data-ix="${i}">${L[lang].OTHER}</button></div>
          <textarea data-ix="${i}" placeholder="${L[lang].NOTE_PLACEHOLDER}"></textarea>
        </div>
        <div class="delete-cell"><button class="delete-btn" title="Delete" data-ix="${i}">🗑️</button></div>`;
@@ -436,10 +439,16 @@ function renderList(){
     ta.addEventListener('focus', ()=> selectRow(i));
     ta.addEventListener('input', e=>{ const ix=+e.target.dataset.ix; laps[ix].note=e.target.value; saveState(); });
   });
-  list.querySelectorAll('.flag-btn').forEach(btn=>btn.addEventListener('click',e=>{
+  list.querySelectorAll('[data-pieces]').forEach(btn=>btn.addEventListener('click',e=>{
     e.stopPropagation();
-    const ix=+e.currentTarget.dataset.flagIx;
-    laps[ix].abnormal=!laps[ix].abnormal;
+    const ix=+e.currentTarget.dataset.ix;
+    laps[ix].pieces=+e.currentTarget.dataset.pieces;
+    refreshUI();
+  }));
+  list.querySelectorAll('[data-reason]').forEach(btn=>btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const ix=+e.currentTarget.dataset.ix, reason=e.currentTarget.dataset.reason;
+    laps[ix].reason=laps[ix].reason===reason?'':reason;
     refreshUI();
   }));
   list.querySelectorAll('.delete-btn').forEach(btn=>btn.addEventListener('click',e=>{
@@ -471,8 +480,9 @@ function updateKPIs(){
   $('#kpiBrct').textContent=br!==null?formatMs(Math.round(br)):'–';
   $('#kpiProgress').textContent=`${laps.length} / 20${laps.length>20?' +':''}`;
   $('#kpiDist').textContent=arr.length?`${disturbanceRate(avg,br).toFixed(1)} %`:'–';
-  $('#kpiSigma').textContent=arr.length>1?formatMs(Math.round(standardDeviation(arr))):'–';
-  $('#kpiTakt').textContent=taktMs>0?`${arr.filter(x=>x>taktMs).length} / ${arr.length}`:'–';
+  const one=laps.filter(x=>x.pieces===1).map(x=>x.ms), two=laps.filter(x=>x.pieces===2).map(x=>x.ms);
+  $('#kpiOne').textContent=one.length?`${formatMs(Math.round(avgMs(one)))} (${one.length})`:'–';
+  $('#kpiTwo').textContent=two.length?`${formatMs(Math.round(avgMs(two)))} (${two.length})`:'–';
 }
 
 /* ===== Diagram ===== */
@@ -533,8 +543,14 @@ function drawChart(){
       const h=msToY(0)-y;
       const isCurrent=running && i===laps.length;
       const overTakt=Number(taktInput.value||0)>0 && ms>Number(taktInput.value)*1000;
-      ctx.fillStyle=isCurrent?'#22c55e':(laps[i]?.abnormal?'#dc2626':(overTakt?'#f59e0b':palette[i%palette.length]));
+      ctx.fillStyle=isCurrent?'#22c55e':((laps[i]?.reason||laps[i]?.note)?'#dc2626':(overTakt?'#f59e0b':palette[i%palette.length]));
       ctx.fillRect(Math.round(x),Math.round(y),Math.floor(bw),Math.max(0,Math.round(h)));
+      const seconds=(ms/1000).toFixed(1);
+      ctx.font=`700 ${Math.max(9,Math.min(12,bw/dpr*.32))*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      const inside=h>30*dpr;
+      ctx.fillStyle=inside?'#fff':ink;
+      ctx.fillText(`${seconds}s`,x+bw/2,inside?y+Math.min(h-5*dpr,18*dpr):y-3*dpr);
       ctx.fillStyle=ink; ctx.font=`${10*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
       ctx.textAlign='center'; ctx.textBaseline='top';
       ctx.fillText(`${i+1}`,x+bw/2,H-padB+6*dpr);
@@ -631,7 +647,7 @@ function saveState(){
     const payload={
       lang,
       theme,
-      laps:laps.map(l=>({ms:l.ms,note:l.note||'',abnormal:!!l.abnormal})),
+      laps:laps.map(l=>({ms:l.ms,note:l.note||'',pieces:l.pieces===2?2:1,reason:l.reason||''})),
       process:processInput.value||'',
       subprocess:subprocessInput.value||'',
       date:dateInput.value||'',
@@ -651,7 +667,7 @@ function loadState(){
       if(stored.lang && L[stored.lang]) lang=stored.lang;
       if(['auto','light','dark'].includes(stored.theme)) theme=stored.theme;
       if(Array.isArray(stored.laps)){
-        laps=stored.laps.map(item=>({ms:Number(item.ms)||0,note:item.note||'',abnormal:!!item.abnormal})).filter(item=>item.ms>0);
+        laps=stored.laps.map(item=>({ms:Number(item.ms)||0,note:item.note||'',pieces:item.pieces===2?2:1,reason:item.reason||(item.abnormal?'other':'')})).filter(item=>item.ms>0);
       }
       if(typeof stored.process==='string') processInput.value=stored.process;
       if(typeof stored.subprocess==='string') subprocessInput.value=stored.subprocess;
@@ -706,9 +722,9 @@ function buildCSVBlob() {
   rows.push(['Date', dateInput.value||'']);
   rows.push(['Takt (s)', Number(taktInput.value)||0]);
   rows.push([]);
-  rows.push(['Cycle','ms','sec','Deviation','Notes']);
+  rows.push(['Cycle','Panels','ms','sec','Deviation type','Notes']);
   laps.forEach((lap,i)=>{
-    rows.push([`${i+1}`, Math.round(lap.ms), formatSecondsForCSV(lap.ms), lap.abnormal?'1':'0', (lap.note||'').replace(/\n/g,' ')]);
+    rows.push([`${i+1}`,lap.pieces||1,Math.round(lap.ms),formatSecondsForCSV(lap.ms),lap.reason||'',(lap.note||'').replace(/\n/g,' ')]);
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\r\n');
   return new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8;'});
@@ -809,8 +825,9 @@ async function exportReport(){
   kpi(lab.SHORTEST, arr.length?fmt(shortest):'–');
   kpi(lab.TAKT_LABEL, taktVal>0? (taktVal+'s') : '–');
   kpi(lab.DISTURBANCE, dPct.toFixed(1)+'%');
-  kpi(lab.KPI_SIGMA, arr.length>1?fmt(standardDeviation(arr)):'–');
-  kpi(lab.DEVIATION, `${laps.filter(l=>l.abnormal).length} / ${laps.length}`);
+  const one=laps.filter(l=>l.pieces===1).map(l=>l.ms), two=laps.filter(l=>l.pieces===2).map(l=>l.ms);
+  kpi(lab.KPI_ONE, one.length?fmt(avgMs(one)):'–');
+  kpi(lab.KPI_TWO, two.length?fmt(avgMs(two)):'–');
 
   ry += 4;
 
@@ -838,7 +855,7 @@ async function exportReport(){
   const timesToShow = Math.min(maxRows, laps.length);
   for(let i=0;i<timesToShow;i++){
     const l = laps[i];
-    row(rightX, ry, [i+1, fmt(l.ms), `${l.abnormal?'[AVV] ':''}${l.note||''}`], false);
+    row(rightX, ry, [`${i+1} (${l.pieces||1})`, fmt(l.ms), `${l.reason?'['+l.reason.toUpperCase()+'] ':''}${l.note||''}`], false);
     ry += rowH;
   }
 
@@ -863,7 +880,7 @@ async function exportReport(){
       pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
       pdf.text(String(i+1),M+2,ty+4);
       pdf.text(fmt(l.ms),M+nW+2,ty+4);
-      pdf.text(l.abnormal?(lang==='sv'?'Ja':'Yes'):(lang==='sv'?'Nej':'No'),M+nW+tW+2,ty+4);
+      pdf.text(l.reason||'—',M+nW+tW+2,ty+4);
       pdf.text(String(l.note||'').substring(0,110),M+nW+tW+dW+2,ty+4,{maxWidth:tableW-nW-tW-dW-4});
       pdf.setDrawColor(229,231,235); pdf.line(M,ty+rowH,M+tableW,ty+rowH); ty+=rowH;
     }
@@ -930,7 +947,6 @@ function init(){
   setLangTexts();
   refreshUI();
   timerDisp.textContent='00:00.00';
-  stopBtn.disabled=true;
 
   document.getElementById('btnLang').addEventListener('click', toggleLanguage);
   document.getElementById('btnTheme').addEventListener('click', toggleTheme);
