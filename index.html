@@ -50,7 +50,7 @@
   .study-details summary{cursor:pointer;color:var(--muted);font-weight:700}
   .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 
-  .timer-card .controls{display:grid;grid-template-columns:minmax(170px,1fr) minmax(140px,.8fr);gap:8px;align-items:center}
+  .timer-card .controls{display:grid;grid-template-columns:minmax(160px,1fr) minmax(130px,.75fr) minmax(92px,.45fr);gap:8px;align-items:center}
   .timer-card .controls > *{min-width:0}
   .timer-card .mid{display:flex;justify-content:center}
   .timer{font-weight:800;font-size:18px;background:#0a0;color:#fff;padding:10px 12px;border-radius:8px;text-align:center;min-width:0;width:100%}
@@ -73,6 +73,9 @@
   }
   .list-row.selected{outline:2px solid #60a5fa}
   .list-row.abnormal{border-left:5px solid #dc2626}
+  .list-row.ct-green{border-left:6px solid #16a34a;background:color-mix(in srgb,#16a34a 9%,var(--paper))}
+  .list-row.ct-orange{border-left:6px solid #f59e0b;background:color-mix(in srgb,#f59e0b 10%,var(--paper))}
+  .list-row.ct-red{border-left:6px solid #dc2626;background:color-mix(in srgb,#dc2626 10%,var(--paper))}
   .badge{display:inline-block;background:#e2e8f0;color:#334155;padding:4px 8px;border-radius:999px;font-size:var(--fs-sm);font-weight:600}
   textarea{width:100%;min-height:42px;border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--paper);color:var(--ink);font:inherit;font-size:16px}
   .flag-btn{min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--muted);font-weight:700;cursor:pointer}
@@ -110,7 +113,7 @@
     .list-row .problems{grid-area:problems}
     .list-row .delete-cell{grid-area:delete;text-align:right}
     .timer-card{position:fixed;z-index:20;left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));box-shadow:0 12px 30px rgba(0,0,0,.28)}
-    .timer-card .controls{grid-template-columns:1.15fr .85fr;gap:6px}
+    .timer-card .controls{grid-template-columns:1fr .72fr .55fr;gap:6px}
     .timer-card .btn{min-height:58px;font-size:20px!important}
     .timer{font-size:20px;padding:16px 8px}
     canvas{height:260px}
@@ -152,12 +155,9 @@
           <input id="date" type="text" placeholder="yyyy-mm-dd">
         </div>
         <div>
-          <label id="lblTakt">TAKT</label>
-          <!-- NEW: knapp för att räkna fram TAKT -->
-          <div style="display:flex; gap:6px;">
-            <input id="takt" type="number" min="0" step="1" placeholder="sek" style="flex:1">
-            <button id="btnCalcTakt" class="btn small" type="button">Beräkna</button> <!-- NEW -->
-          </div>
+          <label id="lblTakt">STANDARD WORK CT</label>
+          <input id="takt" type="number" min="0" step="0.1" placeholder="sek">
+          <div id="colorRule" style="font-size:11px;color:var(--muted);margin-top:4px">Grön ≤ standard · Orange ≤ +20 % · Röd &gt; +20 %</div>
         </div>
       </div>
       <details class="study-details">
@@ -179,6 +179,7 @@
       <div class="controls">
         <div class="start"><button id="btnToggle" class="btn primary" style="width:100%;font-size:16px;padding:12px 14px">Start</button></div>
         <div class="mid"><div class="timer" id="timerDisp">00:00.00</div></div>
+        <div class="stop"><button id="btnStop" class="btn secondary" style="width:100%" disabled>Stoppa</button></div>
       </div>
       <div id="shortcutHelp" class="shortcut-help">Tips: tryck mellanslag (Space) för nästa cykel</div>
     </div>
@@ -224,14 +225,14 @@
 /* ===== i18n ===== */
 const L={
   sv:{PROCESS:"PROCESS",SUBPROCESS:"UNDERPROCESS",DATE:"DATUM",PH_PROCESS:"Ange processnamn…",PH_SUBPROCESS:"Välj eller skriv…",PH_DATE:"yyyy-mm-dd",
-      TAKT:"TAKT", PH_TAKT:"sek", TAKT_LABEL:"Kundtakt:",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Nästa cykel",RESET:"Nollställ",EXPORT:"Excel",REPORT:"PDF",SHORTCUT:"Tips: tryck mellanslag (Space) för nästa cykel",
+      TAKT:"STANDARD WORK CT", PH_TAKT:"sek", TAKT_LABEL:"Standard:",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Nästa cykel",STOP:"Stoppa",RESET:"Nollställ",EXPORT:"Excel",REPORT:"PDF",SHORTCUT:"Tips: tryck mellanslag (Space) för nästa cykel",COLOR_RULE:"Grön ≤ standard · Orange ≤ +20 % · Röd > +20 %",
       RESULTS_TITLE:"Resultat",
       KPI_PROGRESS:"Cykler",KPI_AVG:"Ø CT (medel)",KPI_BRCT:"BRCT (5 snabbaste)",KPI_DIST:"Störningsgrad",KPI_ONE:"Ø CT · 1 ruta",KPI_TWO:"Ø CT · 2 rutor",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:",",
       LONGEST:"Längsta CT:", SHORTEST:"Kortaste CT:", DISTURBANCE:"D %:",
       PRODUCT:"ARTIKEL / VARIANT",BOUNDARY:"MÄTGRÄNS",DETAILS:"Mätdetaljer (valfritt)",PH_PRODUCT:"Artikel, familj eller variant",PH_BOUNDARY:"Startpunkt → slutpunkt",
-      CYCLE:"CYKEL",TIME:"TID",PIECES:"RUTOR",PROBLEMS:"AVVIKELSE / KOMMENTAR",NOTE_PLACEHOLDER:"Egen kommentar (valfritt)",THEME:"Tema",QUALITY:"Kvalitetsproblem / kontroll",CHANGEOVER:"Ställtid",OTHER:"Annat",
+      CYCLE:"CYKEL",TIME:"TID",PIECES:"RUTOR",PROBLEMS:"AVVIKELSE / KOMMENTAR",NOTE_PLACEHOLDER:"Egen kommentar (valfritt)",THEME:"Tema",QUALITY:"Kvalitetsproblem / kontroll",CHANGEOVER:"Ställtid",MACHINE:"Maskinfel",OTHER:"Annat",
       COMPLETE:"20 cykler klara",DELETED:"Cykel raderad",UNDO:"Ångra",NO_DATA:"Inga cykler att exportera.",
       CALC_TAKT_BTN:"Beräkna", /* NEW */
       PROMPT_VOLUME:"Ange årsvolym (antal enheter/år):", /* NEW */
@@ -239,14 +240,14 @@ const L={
       ALERT_BAD_INPUT:"Ogiltiga värden. Försök igen." /* NEW */
   },
   en:{PROCESS:"PROCESS",SUBPROCESS:"SUBPROCESS",DATE:"DATE",PH_PROCESS:"Enter process name…",PH_SUBPROCESS:"Choose or type…",PH_DATE:"yyyy-mm-dd",
-      TAKT:"TAKT", PH_TAKT:"sec", TAKT_LABEL:"Takt:",
-      TOGGLE_START:"Start",TOGGLE_LAP:"Next cycle",RESET:"Reset",EXPORT:"Excel",REPORT:"PDF",SHORTCUT:"Tip: press Space for the next cycle",
+      TAKT:"STANDARD WORK CT", PH_TAKT:"sec", TAKT_LABEL:"Standard:",
+      TOGGLE_START:"Start",TOGGLE_LAP:"Next cycle",STOP:"Stop",RESET:"Reset",EXPORT:"Excel",REPORT:"PDF",SHORTCUT:"Tip: press Space for the next cycle",COLOR_RULE:"Green ≤ standard · Orange ≤ +20% · Red > +20%",
       RESULTS_TITLE:"Results",
       KPI_PROGRESS:"Cycles",KPI_AVG:"Ø CT (mean)",KPI_BRCT:"BRCT (5 fastest)",KPI_DIST:"Disturbance rate",KPI_ONE:"Ø CT · 1 panel",KPI_TWO:"Ø CT · 2 panels",
       KPI_AVG_SHORT:"Ø CT:",KPI_BRCT_SHORT:"BRCT:",CSV_DECIMAL:".",
       LONGEST:"Longest CT:", SHORTEST:"Shortest CT:", DISTURBANCE:"D %:",
       PRODUCT:"ARTICLE / VARIANT",BOUNDARY:"MEASUREMENT BOUNDARY",DETAILS:"Study details (optional)",PH_PRODUCT:"Article, family or variant",PH_BOUNDARY:"Start point → end point",
-      CYCLE:"CYCLE",TIME:"TIME",PIECES:"PANELS",PROBLEMS:"DEVIATION / COMMENT",NOTE_PLACEHOLDER:"Own comment (optional)",THEME:"Theme",QUALITY:"Quality problem / inspection",CHANGEOVER:"Changeover",OTHER:"Other",
+      CYCLE:"CYCLE",TIME:"TIME",PIECES:"PANELS",PROBLEMS:"DEVIATION / COMMENT",NOTE_PLACEHOLDER:"Own comment (optional)",THEME:"Theme",QUALITY:"Quality problem / inspection",CHANGEOVER:"Changeover",MACHINE:"Machine fault",OTHER:"Other",
       COMPLETE:"20 cycles completed",DELETED:"Cycle deleted",UNDO:"Undo",NO_DATA:"No cycles to export.",
       CALC_TAKT_BTN:"Calculate", /* NEW */
       PROMPT_VOLUME:"Enter annual volume (units/year):", /* NEW */
@@ -276,7 +277,7 @@ let rafId=null;
 /* ===== UI refs ===== */
 const processInput=$('#process'), subprocessInput=$('#subprocess'), dateInput=$('#date'), taktInput=$('#takt');
 const productInput=$('#product'), boundaryInput=$('#boundary');
-const toggleBtn=$('#btnToggle'), timerDisp=$('#timerDisp');
+const toggleBtn=$('#btnToggle'), stopBtn=$('#btnStop'), timerDisp=$('#timerDisp');
 const chart=$('#chart');
 
 /* ===== i18n apply ===== */
@@ -309,10 +310,11 @@ function setLangTexts(){
   $('#thPieces').textContent=L[lang].PIECES;
   $('#thProblems').textContent=L[lang].PROBLEMS;
   toggleBtn.textContent = running ? L[lang].TOGGLE_LAP : L[lang].TOGGLE_START;
+  stopBtn.textContent = L[lang].STOP;
   $('#shortcutHelp').textContent=L[lang].SHORTCUT;
+  $('#colorRule').textContent=L[lang].COLOR_RULE;
   $('#langLabel').textContent = lang==='sv'?'SV':'EN';
   $('#btnLang').querySelector('.flag').textContent = lang==='sv'?'🇸🇪':'🇬🇧';
-  document.getElementById('btnCalcTakt').textContent = L[lang].CALC_TAKT_BTN; /* NEW */
   document.getElementById('btnTheme').title = L[lang].THEME;
   renderList();
 }
@@ -326,6 +328,7 @@ function startTimer(){
   if(tick) clearInterval(tick);
   tick=setInterval(()=>{ timerDisp.textContent = formatMs(performance.now()-tStart); }, 50);
   toggleBtn.textContent=L[lang].TOGGLE_LAP;
+  stopBtn.disabled=false;
   requestWakeLock();
   startLoop();
 }
@@ -348,11 +351,13 @@ function cancelCurrentTimer(){
     toggleBtn.textContent=L[lang].TOGGLE_START;
   }
   timerDisp.textContent='00:00.00';
+  stopBtn.disabled=true;
   stopLoop();
   releaseWakeLock();
 }
 function toggle(){ running ? lap() : startTimer(); }
 toggleBtn.addEventListener('click', toggle);
+stopBtn.addEventListener('click', cancelCurrentTimer);
 
 async function requestWakeLock(){
   try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
@@ -420,16 +425,19 @@ function showUndoToast(){
 /* ===== Lista/KPI ===== */
 function renderList(){
   const list=$('#list'); list.innerHTML='';
-  laps.forEach((l,i)=>{
+  const entries=laps.map((l,i)=>({l,i}));
+  if(window.innerWidth<=640) entries.reverse();
+  entries.forEach(({l,i})=>{
     const row=document.createElement('div'); row.className='list-row';
     if(i===selectedIndex) row.classList.add('selected');
-    if(l.reason || l.note) row.classList.add('abnormal');
+    const standardMs=Number(taktInput.value||0)*1000;
+    if(standardMs>0) row.classList.add(l.ms<=standardMs?'ct-green':(l.ms<=standardMs*1.2?'ct-orange':'ct-red'));
     row.innerHTML=
       `<div class="cell cycle"><span class="badge">${i+1}</span></div>
        <div class="cell time"><b>${formatMs(l.ms)}</b></div>
        <div class="pieces-cell"><div class="piece-toggle"><button class="choice ${l.pieces===1?'active':''}" data-pieces="1" data-ix="${i}">${lang==='sv'?'1 ruta':'1 panel'}</button><button class="choice ${l.pieces===2?'active':''}" data-pieces="2" data-ix="${i}">${lang==='sv'?'2 rutor':'2 panels'}</button></div></div>
        <div class="cell problems">
-         <div class="reason-toggle"><button class="choice ${l.reason==='quality'?'active':''}" data-reason="quality" data-ix="${i}">${L[lang].QUALITY}</button><button class="choice ${l.reason==='changeover'?'active':''}" data-reason="changeover" data-ix="${i}">${L[lang].CHANGEOVER}</button><button class="choice ${l.reason==='other'?'active':''}" data-reason="other" data-ix="${i}">${L[lang].OTHER}</button></div>
+         <div class="reason-toggle"><button class="choice ${l.reason==='quality'?'active':''}" data-reason="quality" data-ix="${i}">${L[lang].QUALITY}</button><button class="choice ${l.reason==='changeover'?'active':''}" data-reason="changeover" data-ix="${i}">${L[lang].CHANGEOVER}</button><button class="choice ${l.reason==='machine'?'active':''}" data-reason="machine" data-ix="${i}">${L[lang].MACHINE}</button><button class="choice ${l.reason==='other'?'active':''}" data-reason="other" data-ix="${i}">${L[lang].OTHER}</button></div>
          <textarea data-ix="${i}" placeholder="${L[lang].NOTE_PLACEHOLDER}"></textarea>
        </div>
        <div class="delete-cell"><button class="delete-btn" title="Delete" data-ix="${i}">🗑️</button></div>`;
@@ -471,6 +479,13 @@ function standardDeviation(arr){
   if(arr.length<2) return 0;
   const mean=avgMs(arr);
   return Math.sqrt(arr.reduce((sum,x)=>sum+Math.pow(x-mean,2),0)/(arr.length-1));
+}
+function cycleColor(ms){
+  const standardMs=Number(taktInput.value||0)*1000;
+  if(!standardMs) return '#3b82f6';
+  if(ms<=standardMs) return '#16a34a';
+  if(ms<=standardMs*1.2) return '#f59e0b';
+  return '#dc2626';
 }
 
 function updateKPIs(){
@@ -534,16 +549,13 @@ function drawChart(){
   if(n){
     const gap=Math.max(3*dpr, innerW/(n*20));
     const bw=Math.max(8*dpr,(innerW-gap*(n-1))/n);
-    const palette=['#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb'];
-
     for(let i=0;i<n;i++){
       const ms=values[i];
       const x=padL+i*(bw+gap);
       const y=msToY(ms);
       const h=msToY(0)-y;
       const isCurrent=running && i===laps.length;
-      const overTakt=Number(taktInput.value||0)>0 && ms>Number(taktInput.value)*1000;
-      ctx.fillStyle=isCurrent?'#22c55e':((laps[i]?.reason||laps[i]?.note)?'#dc2626':(overTakt?'#f59e0b':palette[i%palette.length]));
+      ctx.fillStyle=cycleColor(ms);
       ctx.fillRect(Math.round(x),Math.round(y),Math.floor(bw),Math.max(0,Math.round(h)));
       const seconds=(ms/1000).toFixed(1);
       ctx.font=`700 ${Math.max(9,Math.min(12,bw/dpr*.32))*dpr}px system-ui,-apple-system,Segoe UI,Inter,Arial`;
@@ -720,7 +732,7 @@ function buildCSVBlob() {
   rows.push(['Article / variant', productInput.value||'']);
   rows.push(['Measurement boundary', boundaryInput.value||'']);
   rows.push(['Date', dateInput.value||'']);
-  rows.push(['Takt (s)', Number(taktInput.value)||0]);
+  rows.push(['Standard Work CT (s)', Number(taktInput.value)||0]);
   rows.push([]);
   rows.push(['Cycle','Panels','ms','sec','Deviation type','Notes']);
   laps.forEach((lap,i)=>{
@@ -959,10 +971,8 @@ function init(){
   dateInput.addEventListener('input', saveState);
   productInput.addEventListener('input', saveState);
   boundaryInput.addEventListener('input', saveState);
-  taktInput.addEventListener('input', ()=>{ saveState(); drawChart(); });
-  window.addEventListener('resize', ()=>{ drawChart(); });
-
-  document.getElementById('btnCalcTakt').addEventListener('click', calcCustomerTaktInteractive); /* NEW */
+  taktInput.addEventListener('input', ()=>{ saveState(); renderList(); drawChart(); });
+  window.addEventListener('resize', ()=>{ renderList(); drawChart(); });
 
   drawChart();
 }
