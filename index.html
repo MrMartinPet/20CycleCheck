@@ -226,6 +226,7 @@
 
 <!-- jsPDF för PDF-export -->
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
 <script>
 /* ===== i18n ===== */
@@ -808,6 +809,46 @@ async function exportCSV(){
   await shareOrDownloadFile(blob, filename, 'text/csv', preferShare);
 }
 
+/* ===== Modern Excel workbook ===== */
+async function exportXLSX(){
+  if(!laps.length){showToast(L[lang].NO_DATA);return;}
+  rememberSubprocess();
+  if(!window.ExcelJS){showToast(lang==='sv'?'Excel-modulen kunde inte laddas.':'Excel module could not load.');return;}
+  const wb=new ExcelJS.Workbook();
+  wb.creator='20 Cycle Check'; wb.created=new Date();
+  const summary=wb.addWorksheet(lang==='sv'?'Sammanfattning':'Summary',{views:[{showGridLines:false}]});
+  const data=wb.addWorksheet(lang==='sv'?'Cykeldata':'Cycle data',{views:[{showGridLines:false,state:'frozen',ySplit:1}]});
+  const navy='172033',blue='2563EB',red='DC2626',green='16A34A',orange='F59E0B',light='F3F6FA',white='FFFFFF',muted='64748B';
+  summary.columns=[{width:3},{width:22},{width:18},{width:18},{width:18},{width:18},{width:3}];
+  summary.mergeCells('B2:F3'); const title=summary.getCell('B2'); title.value='20 CYCLE CHECK'; title.font={name:'Aptos Display',size:22,bold:true,color:{argb:white}}; title.alignment={vertical:'middle'}; title.fill={type:'pattern',pattern:'solid',fgColor:{argb:navy}};
+  summary.mergeCells('B4:F4'); summary.getCell('B4').value=`${processInput.value||'—'}  /  ${subprocessInput.value||'—'}  /  ${dateInput.value||'—'}`; summary.getCell('B4').font={name:'Aptos',size:11,color:{argb:'DCE5F2'}}; summary.getCell('B4').fill={type:'pattern',pattern:'solid',fgColor:{argb:navy}};
+  const arr=laps.map(l=>l.ms),avg=avgMs(arr),br=brctMs(arr),dist=disturbanceRate(avg,br);
+  const one=laps.filter(l=>l.pieces===1).map(l=>l.ms),two=laps.filter(l=>l.pieces===2).map(l=>l.ms);
+  const cards=[
+    [lang==='sv'?'CYKLER':'CYCLES',laps.length],
+    ['Ø CT',avg/1000],
+    ['BRCT',br===null?null:br/1000],
+    [lang==='sv'?'STÖRNINGSGRAD':'DISTURBANCE',dist/100],
+    ['Ø 1 '+(lang==='sv'?'RUTA':'PANEL'),one.length?avgMs(one)/1000:null],
+    ['Ø 2 '+(lang==='sv'?'RUTOR':'PANELS'),two.length?avgMs(two)/1000:null]
+  ];
+  cards.forEach((c,i)=>{const col=2+(i%3)*2,row=6+Math.floor(i/3)*3;summary.mergeCells(row,col,row,col+1);summary.getCell(row,col).value=c[0];summary.getCell(row,col).font={name:'Aptos',size:9,bold:true,color:{argb:muted}};summary.mergeCells(row+1,col,row+1,col+1);const v=summary.getCell(row+1,col);v.value=c[1];v.font={name:'Aptos Display',size:18,bold:true,color:{argb:navy}};v.fill={type:'pattern',pattern:'solid',fgColor:{argb:light}};v.alignment={vertical:'middle'};if(i===3)v.numFmt='0.0%';else if(i!==0)v.numFmt='0.00" s"';});
+  summary.getCell('B13').value=lang==='sv'?'MÄTNING':'MEASUREMENT'; summary.getCell('B13').font={bold:true,color:{argb:white}}; summary.getCell('B13').fill={type:'pattern',pattern:'solid',fgColor:{argb:blue}};
+  const meta=[[lang==='sv'?'Artikel / variant':'Article / variant',productInput.value||'—'],[lang==='sv'?'Mätgräns':'Measurement boundary',boundaryInput.value||'—'],['Standard Work CT',Number(standardInput.value)||'—'],[lang==='sv'?'Takttid':'Takt time',Number(taktInput.value)||'—']];
+  meta.forEach((r,i)=>{summary.getCell(14+i,2).value=r[0];summary.getCell(14+i,2).font={bold:true,color:{argb:muted}};summary.mergeCells(14+i,3,14+i,6);summary.getCell(14+i,3).value=r[1];if(i>1&&typeof r[1]==='number')summary.getCell(14+i,3).numFmt='0.0" s"';});
+  summary.getRange?.('B2:F17');
+  data.columns=[
+    {header:lang==='sv'?'Cykel':'Cycle',key:'cycle',width:10},{header:lang==='sv'?'Rutor':'Panels',key:'pieces',width:10},{header:lang==='sv'?'Cykeltid (s)':'Cycle time (s)',key:'seconds',width:16},{header:lang==='sv'?'Mot standard':'Vs standard',key:'status',width:16},{header:lang==='sv'?'Avvikelse':'Deviation',key:'reason',width:24},{header:lang==='sv'?'Kommentar':'Comment',key:'note',width:55}
+  ];
+  const tableRows=laps.map((l,i)=>{const std=Number(standardInput.value||0)*1000;const status=!std?'—':(l.ms<=std?(lang==='sv'?'Inom standard':'Within standard'):(l.ms<=std*1.2?(lang==='sv'?'Över standard':'Above standard'):(lang==='sv'?'Mycket över':'Far above')));return[i+1,l.pieces||1,l.ms/1000,status,l.reason||'',l.note||''];});
+  data.addTable({name:'CycleData',ref:'A1',headerRow:true,totalsRow:false,style:{theme:'TableStyleMedium2',showRowStripes:true},columns:data.columns.map(c=>({name:c.header})),rows:tableRows});
+  data.getColumn(3).numFmt='0.00" s"'; data.getRow(1).height=24;
+  data.eachRow((row,rowNo)=>{row.alignment={vertical:'middle'};row.font={name:'Aptos',size:10};if(rowNo>1){const ms=laps[rowNo-2]?.ms||0;const std=Number(standardInput.value||0)*1000;const color=!std?blue:(ms<=std?green:(ms<=std*1.2?orange:red));row.getCell(4).fill={type:'pattern',pattern:'solid',fgColor:{argb:color}};row.getCell(4).font={bold:true,color:{argb:white}};}});
+  summary.pageSetup={orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.3,right:.3,top:.4,bottom:.4,header:.2,footer:.2}};
+  const buffer=await wb.xlsx.writeBuffer();
+  await shareOrDownloadFile(new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`20-cycle-check-${new Date().toISOString().slice(0,10)}.xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',true);
+}
+
 /* ===== Export PDF-rapport (A4 liggande) ===== */
 async function exportReport(){
   if(!laps.length){ showToast(L[lang].NO_DATA); return; }
@@ -948,6 +989,53 @@ async function exportReport(){
   await shareOrDownloadFile(pdfBlob, filename, 'application/pdf', preferShare);
 }
 
+async function exportReportModern(){
+  if(!laps.length){showToast(L[lang].NO_DATA);return;}
+  rememberSubprocess();
+  document.documentElement.dataset.theme='light'; drawChart();
+  const chartImg=document.getElementById('chart').toDataURL('image/png',1);
+  document.documentElement.dataset.theme='dark'; drawChart();
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
+  const W=297,H=210,M=9,navy=[23,32,51],blue=[37,99,235],muted=[100,116,139],line=[226,232,240],white=[255,255,255];
+  const arr=laps.map(l=>l.ms),avg=avgMs(arr),br=brctMs(arr),dist=disturbanceRate(avg,br);
+  const one=laps.filter(l=>l.pieces===1).map(l=>l.ms),two=laps.filter(l=>l.pieces===2).map(l=>l.ms);
+  const sec=ms=>ms==null?'--':(ms/1000).toFixed(2)+' s';
+  pdf.setFillColor(...white);pdf.rect(0,0,W,H,'F');
+  pdf.setFillColor(...navy);pdf.roundedRect(M,M,W-2*M,20,3,3,'F');
+  pdf.setFont('helvetica','bold');pdf.setFontSize(18);pdf.setTextColor(...white);pdf.text('20 CYCLE CHECK',M+6,M+8);
+  pdf.setFont('helvetica','normal');pdf.setFontSize(8.5);pdf.setTextColor(215,226,240);
+  const headerMeta=`${processInput.value||'-'}  /  ${subprocessInput.value||'-'}  /  ${dateInput.value||'-'}`;
+  pdf.text(headerMeta,M+6,M+14,{maxWidth:150});
+  pdf.setFontSize(8);pdf.text(`${lang==='sv'?'Artikel':'Article'}: ${productInput.value||'-'}`,W-M-82,M+8,{maxWidth:76});
+  pdf.text(`${lang==='sv'?'Mätgräns':'Boundary'}: ${boundaryInput.value||'-'}`,W-M-82,M+14,{maxWidth:76});
+  const cards=[
+    [lang==='sv'?'CYKLER':'CYCLES',String(laps.length)],
+    ['AVG CT',sec(avg)],['BRCT',sec(br)],
+    [lang==='sv'?'STÖRNING':'DISTURBANCE',dist.toFixed(1)+' %'],
+    ['AVG 1 '+(lang==='sv'?'RUTA':'PANEL'),one.length?sec(avgMs(one)):'--'],
+    ['AVG 2 '+(lang==='sv'?'RUTOR':'PANELS'),two.length?sec(avgMs(two)):'--']
+  ];
+  const gap=3,cardW=(W-2*M-gap*5)/6,cardY=33;
+  cards.forEach((c,i)=>{const x=M+i*(cardW+gap);pdf.setFillColor(244,247,251);pdf.setDrawColor(...line);pdf.roundedRect(x,cardY,cardW,21,2,2,'FD');pdf.setFillColor(...blue);pdf.rect(x,cardY,1.8,21,'F');pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.setTextColor(...muted);pdf.text(c[0],x+4,cardY+6);pdf.setFontSize(14);pdf.setTextColor(...navy);pdf.text(c[1],x+4,cardY+15);});
+  const chartX=M,chartY=59,chartW=177,chartH=136;
+  pdf.setDrawColor(...line);pdf.roundedRect(chartX,chartY,chartW,chartH,2,2,'S');
+  pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(...navy);pdf.text(lang==='sv'?'CYKELTIDER':'CYCLE TIMES',chartX+5,chartY+7);
+  pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(...muted);
+  pdf.text(`Standard Work CT: ${Number(standardInput.value)||'-'} s   |   ${lang==='sv'?'Takttid':'Takt'}: ${Number(taktInput.value)||'-'} s`,chartX+5,chartY+12);
+  pdf.addImage(chartImg,'PNG',chartX+3,chartY+15,chartW-6,chartH-19,undefined,'FAST');
+  const tableX=190,tableY=59,tableW=W-M-tableX,rowH=5.8;
+  pdf.setFillColor(...navy);pdf.roundedRect(tableX,tableY,tableW,9,2,2,'F');
+  pdf.setFont('helvetica','bold');pdf.setFontSize(7.2);pdf.setTextColor(...white);
+  pdf.text('#',tableX+3,tableY+5.8);pdf.text(lang==='sv'?'Rutor':'Panels',tableX+11,tableY+5.8);pdf.text(lang==='sv'?'Tid':'Time',tableX+28,tableY+5.8);pdf.text(lang==='sv'?'Avvikelse / kommentar':'Deviation / comment',tableX+48,tableY+5.8);
+  laps.slice(0,20).forEach((l,i)=>{const y=tableY+9+i*rowH;const std=Number(standardInput.value||0)*1000;const color=!std?[37,99,235]:(l.ms<=std?[22,163,74]:(l.ms<=std*1.2?[245,158,11]:[220,38,38]));if(i%2===0){pdf.setFillColor(247,249,252);pdf.rect(tableX,y,tableW,rowH,'F');}pdf.setFillColor(...color);pdf.circle(tableX+4.3,y+rowH/2,1.2,'F');pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(...navy);pdf.text(String(i+1),tableX+7,y+3.8);pdf.text(String(l.pieces||1),tableX+17,y+3.8);pdf.text(sec(l.ms),tableX+28,y+3.8);const reason=({quality:lang==='sv'?'Kvalitet':'Quality',changeover:lang==='sv'?'Ställtid':'Changeover',machine:lang==='sv'?'Maskinfel':'Machine fault',other:lang==='sv'?'Annat':'Other'})[l.reason]||'';const note=[reason,l.note].filter(Boolean).join(': ');pdf.text(note||'-',tableX+48,y+3.8,{maxWidth:tableW-50});pdf.setDrawColor(235,239,245);pdf.line(tableX,y+rowH,tableX+tableW,y+rowH);});
+  pdf.setFont('helvetica','normal');pdf.setFontSize(6.5);pdf.setTextColor(...muted);
+  pdf.text(lang==='sv'?'BRCT = medel av de fem snabbaste cyklerna. Störningsgrad = (medel CT - BRCT) / medel CT.':'BRCT = average of the five fastest cycles. Disturbance = (average CT - BRCT) / average CT.',M,H-5);
+  pdf.text(new Date().toLocaleString(lang==='sv'?'sv-SE':'en-GB'),W-M-35,H-5);
+  const blob=pdf.output('blob');
+  await shareOrDownloadFile(blob,`20-cycle-check-report-${new Date().toISOString().slice(0,10)}.pdf`,'application/pdf',true);
+}
+
 /* ===== Reset ===== */
 function resetApp(){
   if(!confirm(lang==='sv'?'Är du säker på att du vill nollställa?':'Are you sure you want to reset?')) return;
@@ -997,8 +1085,8 @@ function init(){
   timerDisp.textContent='00:00.00';
 
   document.getElementById('btnLang').addEventListener('click', toggleLanguage);
-  document.getElementById('btnExport').addEventListener('click', exportCSV);
-  document.getElementById('btnReport').addEventListener('click', exportReport);
+  document.getElementById('btnExport').addEventListener('click', exportXLSX);
+  document.getElementById('btnReport').addEventListener('click', exportReportModern);
   document.getElementById('btnReset').addEventListener('click', resetApp);
   processInput.addEventListener('input', saveState);
   subprocessInput.addEventListener('input', saveState);
