@@ -992,9 +992,6 @@ async function exportReport(){
 async function exportReportModern(){
   if(!laps.length){showToast(L[lang].NO_DATA);return;}
   rememberSubprocess();
-  document.documentElement.dataset.theme='light'; drawChart();
-  const chartImg=document.getElementById('chart').toDataURL('image/png',1);
-  document.documentElement.dataset.theme='dark'; drawChart();
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
   const W=297,H=210,M=9,navy=[23,32,51],blue=[37,99,235],muted=[100,116,139],line=[226,232,240],white=[255,255,255];
@@ -1010,20 +1007,43 @@ async function exportReportModern(){
   pdf.setFontSize(8);pdf.text(`${lang==='sv'?'Artikel':'Article'}: ${productInput.value||'-'}`,W-M-82,M+8,{maxWidth:76});
   pdf.text(`${lang==='sv'?'Mätgräns':'Boundary'}: ${boundaryInput.value||'-'}`,W-M-82,M+14,{maxWidth:76});
   const cards=[
-    [lang==='sv'?'CYKLER':'CYCLES',String(laps.length)],
-    ['AVG CT',sec(avg)],['BRCT',sec(br)],
-    [lang==='sv'?'STÖRNING':'DISTURBANCE',dist.toFixed(1)+' %'],
-    ['AVG 1 '+(lang==='sv'?'RUTA':'PANEL'),one.length?sec(avgMs(one)):'--'],
-    ['AVG 2 '+(lang==='sv'?'RUTOR':'PANELS'),two.length?sec(avgMs(two)):'--']
+    [lang==='sv'?'Antal cykler':'Number of cycles',String(laps.length)],
+    [lang==='sv'?'Medel Cykeltid':'Average cycle time',sec(avg)],
+    [lang==='sv'?'Bäst repeterbara cykeltid':'Best repeatable cycle time',sec(br)],
+    [lang==='sv'?'Störningsgrad':'Disturbance rate',dist.toFixed(1)+' %'],
+    [lang==='sv'?'Medelcykeltid 1 ruta':'Average cycle time 1 panel',one.length?sec(avgMs(one)):'--'],
+    [lang==='sv'?'Medelcykeltid 2 rutor':'Average cycle time 2 panels',two.length?sec(avgMs(two)):'--']
   ];
   const gap=3,cardW=(W-2*M-gap*5)/6,cardY=33;
-  cards.forEach((c,i)=>{const x=M+i*(cardW+gap);pdf.setFillColor(244,247,251);pdf.setDrawColor(...line);pdf.roundedRect(x,cardY,cardW,21,2,2,'FD');pdf.setFillColor(...blue);pdf.rect(x,cardY,1.8,21,'F');pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.setTextColor(...muted);pdf.text(c[0],x+4,cardY+6);pdf.setFontSize(14);pdf.setTextColor(...navy);pdf.text(c[1],x+4,cardY+15);});
+  cards.forEach((c,i)=>{const x=M+i*(cardW+gap);pdf.setFillColor(244,247,251);pdf.setDrawColor(...line);pdf.roundedRect(x,cardY,cardW,21,2,2,'FD');pdf.setFillColor(...blue);pdf.rect(x,cardY,1.8,21,'F');pdf.setFont('helvetica','bold');pdf.setFontSize(c[0].length>25?5.4:6.2);pdf.setTextColor(...muted);pdf.text(c[0],x+4,cardY+6,{maxWidth:cardW-6});pdf.setFontSize(14);pdf.setTextColor(...navy);pdf.text(c[1],x+4,cardY+15);});
   const chartX=M,chartY=59,chartW=177,chartH=136;
   pdf.setDrawColor(...line);pdf.roundedRect(chartX,chartY,chartW,chartH,2,2,'S');
   pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(...navy);pdf.text(lang==='sv'?'CYKELTIDER':'CYCLE TIMES',chartX+5,chartY+7);
   pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(...muted);
   pdf.text(`Standard Work CT: ${Number(standardInput.value)||'-'} s   |   ${lang==='sv'?'Takttid':'Takt'}: ${Number(taktInput.value)||'-'} s`,chartX+5,chartY+12);
-  pdf.addImage(chartImg,'PNG',chartX+3,chartY+15,chartW-6,chartH-19,undefined,'FAST');
+  // Draw the chart as PDF vectors so bars, guide lines and labels stay sharp at any zoom.
+  const standardSec=Number(standardInput.value)||0,taktSec=Number(taktInput.value)||0;
+  const plotX=chartX+16,plotY=chartY+20,plotW=116,plotH=103,legendX=plotX+plotW+5;
+  const values=arr.map(ms=>ms/1000),guideValues=[avg/1000,br/1000,standardSec,taktSec].filter(v=>v>0);
+  const rawMax=Math.max(10,...values,...guideValues),step=rawMax<=30?5:(rawMax<=60?10:Math.ceil(rawMax/30)*5);
+  const maxSec=Math.ceil(rawMax/step)*step,yFor=s=>plotY+plotH-(s/maxSec)*plotH;
+  pdf.setFont('helvetica','normal');pdf.setFontSize(6.5);pdf.setTextColor(...muted);
+  for(let s=0;s<=maxSec;s+=step){const y=yFor(s);pdf.setDrawColor(224,230,238);pdf.setLineWidth(.22);pdf.setLineDashPattern([],0);pdf.line(plotX,y,plotX+plotW,y);pdf.text(`${s} s`,plotX-2,y+2,{align:'right'});}
+  pdf.setDrawColor(148,163,184);pdf.setLineWidth(.35);pdf.line(plotX,plotY,plotX,plotY+plotH);pdf.line(plotX,plotY+plotH,plotX+plotW,plotY+plotH);
+  const slot=plotW/laps.length,barW=Math.max(2.7,Math.min(7.2,slot*.68));
+  laps.forEach((l,i)=>{const seconds=l.ms/1000,barY=yFor(seconds),barH=plotY+plotH-barY;const color=!standardSec?[37,99,235]:(seconds<=standardSec?[74,163,68]:(seconds<=standardSec*1.2?[232,166,19]:[204,58,42]));const cx=plotX+slot*(i+.5);pdf.setFillColor(...color);pdf.roundedRect(cx-barW/2,barY,barW,barH,.45,.45,'F');pdf.setFont('helvetica','bold');pdf.setFontSize(laps.length>15?5.2:6.1);const label=`${seconds.toFixed(1)} s`;if(barH>=10){pdf.setTextColor(...white);pdf.text(label,cx,barY+4.2,{align:'center'});}else{pdf.setTextColor(...navy);pdf.text(label,cx,Math.max(plotY+3,barY-1.4),{align:'center'});}pdf.setFont('helvetica','normal');pdf.setFontSize(6);pdf.setTextColor(...navy);pdf.text(String(i+1),cx,plotY+plotH+4.5,{align:'center'});});
+  const guides=[
+    {label:lang==='sv'?'Medel':'Average',value:avg/1000,color:[232,126,22],dash:[2,1]},
+    {label:'BRCT',value:br/1000,color:[44,160,89],dash:[2,1]},
+    ...(standardSec?[{label:'Standard',value:standardSec,color:[63,129,230],dash:[]}]:[]),
+    ...(taktSec?[{label:lang==='sv'?'Takt':'Takt',value:taktSec,color:[145,78,229],dash:[.7,1]}]:[])
+  ];
+  guides.forEach(g=>{const y=yFor(g.value);pdf.setDrawColor(...g.color);pdf.setLineWidth(.65);pdf.setLineDashPattern(g.dash,0);pdf.line(plotX,y,plotX+plotW,y);});
+  pdf.setLineDashPattern([],0);
+  const labelItems=guides.map(g=>({...g,y:yFor(g.value)})).sort((a,b)=>a.y-b.y);
+  labelItems.forEach((g,i)=>{g.ly=Math.max(plotY+3,g.y);if(i&&g.ly<labelItems[i-1].ly+8)g.ly=labelItems[i-1].ly+8;});
+  if(labelItems.length&&labelItems[labelItems.length-1].ly>plotY+plotH-2){const shift=labelItems[labelItems.length-1].ly-(plotY+plotH-2);labelItems.forEach(g=>g.ly-=shift);}
+  labelItems.forEach(g=>{pdf.setDrawColor(...g.color);pdf.setLineWidth(.5);pdf.line(plotX+plotW,g.y,legendX-1,g.ly);pdf.setFillColor(...g.color);pdf.roundedRect(legendX,g.ly-3.3,35,6.2,1,1,'F');pdf.setFont('helvetica','bold');pdf.setFontSize(6.3);pdf.setTextColor(...white);pdf.text(`${g.label}: ${g.value.toFixed(1)} s`,legendX+2,g.ly+.8,{maxWidth:31});});
   const tableX=190,tableY=59,tableW=W-M-tableX,rowH=5.8;
   pdf.setFillColor(...navy);pdf.roundedRect(tableX,tableY,tableW,9,2,2,'F');
   pdf.setFont('helvetica','bold');pdf.setFontSize(7.2);pdf.setTextColor(...white);
