@@ -123,6 +123,9 @@
   }
   .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:40;background:#0f172a;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
   .hidden{display:none!important}
+  .capacity-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:2px}.capacity-summary .pill{border-left:4px solid var(--blue-500)}
+  .modal-backdrop{position:fixed;inset:0;z-index:60;background:rgba(2,6,23,.72);display:flex;align-items:center;justify-content:center;padding:14px}.modal{width:min(620px,100%);max-height:92vh;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.45);padding:16px}.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.modal-head h2{font-size:19px;margin:0}.modal-close{font-size:24px;line-height:1;border:0;background:none;color:var(--ink);cursor:pointer}.process-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.calc-preview{margin-top:12px;padding:10px;border-radius:10px;background:color-mix(in srgb,var(--blue-500) 10%,var(--paper));border:1px solid color-mix(in srgb,var(--blue-500) 35%,var(--line));font-size:var(--fs-sm)}
+  @media(max-width:640px){.capacity-summary{grid-template-columns:1fr}.process-grid{grid-template-columns:1fr}.modal{padding:14px}.menu-actions{grid-template-columns:repeat(5,1fr)}}
 </style>
 </head>
 <body>
@@ -133,6 +136,7 @@
     <div class="logo">20 Cycle Check</div>
     <div class="menu-actions">
       <button id="btnLang" class="langbtn"><span class="flag">🇸🇪</span><span id="langLabel">SV</span></button>
+      <button id="btnProcessData" class="btn small">Processdata</button>
       <button id="btnExport" class="btn small">Exportera</button>
       <button id="btnReport" class="btn small">Rapport (PDF)</button>
       <button id="btnReset" class="btn small danger">Nollställ</button>
@@ -204,6 +208,7 @@
           <div class="pill"><span id="kpiOneLabel"></span> <b id="kpiOne">–</b></div>
           <div class="pill"><span id="kpiTwoLabel"></span> <b id="kpiTwo">–</b></div>
         </div>
+        <div id="capacitySummary" class="capacity-summary hidden"><div class="pill"><span id="capCyclesLabel">Cykler/skift</span><b id="capCycles">–</b></div><div class="pill"><span id="capProductsLabel">Produkter/skift</span><b id="capProducts">–</b></div><div class="pill"><span id="capTargetLabel">Rimligt mål</span><b id="capTarget">–</b></div></div>
       </div>
       <div class="chart-wrap">
         <canvas id="chart" height="360"></canvas>
@@ -222,6 +227,8 @@
     </div>
   </div>
 </div>
+<div id="processModal" class="modal-backdrop hidden" role="dialog" aria-modal="true"><div class="modal"><div class="modal-head"><h2 id="processModalTitle">Processdata och skiftmål</h2><button id="closeProcessModal" class="modal-close">×</button></div><div class="process-grid">
+<div><label id="lblAnnualDemand">ÅRSBEHOV PRODUKTER</label><input id="annualDemand" type="number" min="0" step="1" inputmode="decimal" placeholder="t.ex. 100000"></div><div><label id="lblProductsCycle">PRODUKTER PER CYKEL</label><input id="productsPerCycle" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="t.ex. 1,5"></div><div><label id="lblWeeklyHours">ARBETSTID PER VECKA</label><input id="weeklyHours" type="number" min="0" step="0.1" inputmode="decimal" placeholder="78"></div><div><label id="lblShiftHours">ARBETSTID PER SKIFT</label><input id="shiftHours" type="number" min="0" step="0.1" inputmode="decimal" placeholder="8"></div><div><label id="lblSetups">UPPSKATTADE STÄLL PER SKIFT</label><input id="setupsPerShift" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div><div><label id="lblSetupMinutes">STÄLLTID PER STÄLL (MIN)</label><input id="setupMinutes" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0"></div></div><div id="processPreview" class="calc-preview"></div><div class="modal-actions"><button id="cancelProcessData" class="btn secondary">Avbryt</button><button id="saveProcessData" class="btn primary">Spara och beräkna</button></div></div></div>
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
 <!-- jsPDF för PDF-export -->
@@ -274,6 +281,7 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[];
 let running=false, tStart=0, tick=null;
 let pendingCycle={note:'',pieces:1,reason:''};
+let processData={annualDemand:0,productsPerCycle:1,weeklyHours:78,shiftHours:8,setupsPerShift:0,setupMinutes:0};
 let selectedIndex=-1;
 const STORAGE_KEY='cycle-check-state-v8';
 const LEGACY_STORAGE_KEY='cycle-check-state-v6';
@@ -301,6 +309,7 @@ function setLangTexts(){
   $('#date').placeholder=L[lang].PH_DATE;
   standardInput.placeholder=L[lang].PH_TAKT;
   taktInput.placeholder=L[lang].PH_TAKT;
+  $('#btnProcessData').textContent=lang==='sv'?'Processdata':'Process data';
   $('#btnExport').textContent=L[lang].EXPORT;
   $('#btnReport').textContent=L[lang].REPORT;
   $('#btnReset').textContent=L[lang].RESET;
@@ -326,7 +335,7 @@ function setLangTexts(){
   $('#colorRule').textContent=L[lang].COLOR_RULE;
   $('#langLabel').textContent = lang==='sv'?'SV':'EN';
   $('#btnLang').querySelector('.flag').textContent = lang==='sv'?'🇸🇪':'🇬🇧';
-  $('#btnCalcTakt').textContent=L[lang].CALC_TAKT_BTN;
+  $('#btnCalcTakt').textContent=L[lang].CALC_TAKT_BTN;applyProcessDataTexts();
   renderList();
 }
 
@@ -529,6 +538,16 @@ function updateKPIs(){
   $('#kpiTwo').textContent=two.length?`${formatMs(Math.round(avgMs(two)))} (${two.length})`:'–';
 }
 
+function processCapacity(){const avg=avgMs(laps.map(x=>x.ms))/1000,ppc=Math.max(.01,Number(processData.productsPerCycle)||1),shift=Math.max(0,Number(processData.shiftHours)||0)*3600,setup=Math.max(0,Number(processData.setupsPerShift)||0)*Math.max(0,Number(processData.setupMinutes)||0)*60,productive=Math.max(0,shift-setup),grossCycles=avg?Math.floor(shift/avg):0,targetCycles=avg?Math.floor(productive/avg):0;return{avg,ppc,grossCycles,grossProducts:grossCycles*ppc,targetCycles,targetProducts:targetCycles*ppc}}
+function formatQty(v){return Number(v||0).toLocaleString(lang==='sv'?'sv-SE':'en-GB',{maximumFractionDigits:1})}
+function updateCapacitySummary(){const x=processCapacity(),ok=laps.length&&Number(processData.shiftHours)>0&&Number(processData.productsPerCycle)>0;$('#capacitySummary').classList.toggle('hidden',!ok);$('#capCycles').textContent=ok?formatQty(x.grossCycles):'–';$('#capProducts').textContent=ok?formatQty(x.grossProducts):'–';$('#capTarget').textContent=ok?formatQty(x.targetProducts):'–'}
+function applyProcessDataTexts(){const s=lang==='sv';$('#processModalTitle').textContent=s?'Processdata och skiftmål':'Process data and shift target';$('#lblAnnualDemand').textContent=s?'ÅRSBEHOV PRODUKTER':'ANNUAL PRODUCT DEMAND';$('#lblProductsCycle').textContent=s?'PRODUKTER PER CYKEL':'PRODUCTS PER CYCLE';$('#lblWeeklyHours').textContent=s?'ARBETSTID PER VECKA':'WORKING HOURS PER WEEK';$('#lblShiftHours').textContent=s?'ARBETSTID PER SKIFT':'WORKING HOURS PER SHIFT';$('#lblSetups').textContent=s?'UPPSKATTADE STÄLL PER SKIFT':'ESTIMATED CHANGEOVERS PER SHIFT';$('#lblSetupMinutes').textContent=s?'STÄLLTID PER STÄLL (MIN)':'MINUTES PER CHANGEOVER';$('#cancelProcessData').textContent=s?'Avbryt':'Cancel';$('#saveProcessData').textContent=s?'Spara och beräkna':'Save and calculate';$('#capCyclesLabel').textContent=s?'Cykler/skift':'Cycles/shift';$('#capProductsLabel').textContent=s?'Produkter/skift':'Products/shift';$('#capTargetLabel').textContent=s?'Rimligt mål efter ställ':'Reasonable target after changeovers';updateProcessPreview()}
+function fillProcessModal(){for(const k of Object.keys(processData))$('#'+k).value=processData[k]??'';updateProcessPreview()}
+function readN(id,d=0){const n=Number(String($('#'+id).value||'').replace(',','.'));return Number.isFinite(n)?n:d}
+function readProcessForm(){return{annualDemand:Math.max(0,readN('annualDemand')),productsPerCycle:Math.max(.01,readN('productsPerCycle',1)),weeklyHours:Math.max(0,readN('weeklyHours')),shiftHours:Math.max(0,readN('shiftHours')),setupsPerShift:Math.max(0,readN('setupsPerShift')),setupMinutes:Math.max(0,readN('setupMinutes'))}}
+function updateProcessPreview(){if(!$('#processPreview'))return;const old=processData;processData=readProcessForm();const x=processCapacity(),s=lang==='sv',t=processData.annualDemand&&processData.weeklyHours?processData.weeklyHours*45*3600/processData.annualDemand*processData.productsPerCycle:0;$('#processPreview').textContent=laps.length?(s?'Kapacitet: '+formatQty(x.grossCycles)+' cykler / '+formatQty(x.grossProducts)+' produkter per skift. Rimligt mål efter ställ: '+formatQty(x.targetProducts)+' produkter. Takttid per cykel: '+(t?t.toFixed(1)+' s':'–')+'.':'Capacity: '+formatQty(x.grossCycles)+' cycles / '+formatQty(x.grossProducts)+' products per shift. Reasonable target after changeovers: '+formatQty(x.targetProducts)+' products. Takt per cycle: '+(t?t.toFixed(1)+' s':'–')+'.'):(s?'Genomför mätningen för att beräkna kapacitet och skiftmål.':'Complete the study to calculate capacity and shift target.');processData=old}
+function openProcessModal(){fillProcessModal();$('#processModal').classList.remove('hidden');$('#annualDemand').focus()}function closeProcessModal(){$('#processModal').classList.add('hidden')}function saveProcessForm(){processData=readProcessForm();if(processData.annualDemand&&processData.weeklyHours)taktInput.value=(processData.weeklyHours*45*3600/processData.annualDemand*processData.productsPerCycle).toFixed(1);saveState();updateCapacitySummary();drawChart();closeProcessModal()}
+
 /* ===== Diagram ===== */
 function drawChart(){
   const dpr=window.devicePixelRatio||1;
@@ -700,7 +719,7 @@ function saveState(){
       standard:Number(standardInput.value)||0,
       takt:Number(taktInput.value)||0,
       product:productInput.value||'',
-      boundary:boundaryInput.value||''
+      boundary:boundaryInput.value||'',processData
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }catch(err){ console.warn('Failed to save state', err); }
@@ -725,6 +744,7 @@ function loadState(){
       if(typeof stored.takt==='number') taktInput.value = stored.takt || '';
       if(typeof stored.product==='string') productInput.value=stored.product;
       if(typeof stored.boundary==='string') boundaryInput.value=stored.boundary;
+      if(stored.processData&&typeof stored.processData==='object')processData={...processData,...stored.processData};
     }
   }catch(err){ console.warn('Failed to load state', err); }
 }
@@ -1016,7 +1036,8 @@ async function exportReportModern(){
   ];
   const gap=3,cardW=(W-2*M-gap*5)/6,cardY=33;
   cards.forEach((c,i)=>{const x=M+i*(cardW+gap);pdf.setFillColor(244,247,251);pdf.setDrawColor(...line);pdf.roundedRect(x,cardY,cardW,21,2,2,'FD');pdf.setFillColor(...blue);pdf.rect(x,cardY,1.8,21,'F');pdf.setFont('helvetica','bold');pdf.setFontSize(c[0].length>25?5.4:6.2);pdf.setTextColor(...muted);pdf.text(c[0],x+4,cardY+6,{maxWidth:cardW-6});pdf.setFontSize(14);pdf.setTextColor(...navy);pdf.text(c[1],x+4,cardY+15);});
-  const chartX=M,chartY=59,chartW=177,chartH=136;
+  const cap=processCapacity(),capY=57,capGap=3,capW=(W-2*M-capGap*2)/3,capacityCards=[[lang==='sv'?'Cykler per skift':'Cycles per shift',formatQty(cap.grossCycles)],[lang==='sv'?'Produkter per skift':'Products per shift',formatQty(cap.grossProducts)],[lang==='sv'?'Rimligt mål efter ställ':'Reasonable target after changeovers',formatQty(cap.targetProducts)]];capacityCards.forEach((v,i)=>{const x=M+i*(capW+capGap);pdf.setFillColor(239,246,255);pdf.setDrawColor(191,219,254);pdf.roundedRect(x,capY,capW,16,2,2,'FD');pdf.setFont('helvetica','bold');pdf.setFontSize(6.5);pdf.setTextColor(...muted);pdf.text(v[0],x+4,capY+5);pdf.setFontSize(12);pdf.setTextColor(...navy);pdf.text(v[1],x+4,capY+12)});
+  const chartX=M,chartY=77,chartW=177,chartH=118;
   pdf.setDrawColor(...line);pdf.roundedRect(chartX,chartY,chartW,chartH,2,2,'S');
   pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(...navy);pdf.text(lang==='sv'?'CYKELTIDER':'CYCLE TIMES',chartX+5,chartY+7);
   pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(...muted);
@@ -1044,13 +1065,13 @@ async function exportReportModern(){
   labelItems.forEach((g,i)=>{g.ly=Math.max(plotY+3,g.y);if(i&&g.ly<labelItems[i-1].ly+8)g.ly=labelItems[i-1].ly+8;});
   if(labelItems.length&&labelItems[labelItems.length-1].ly>plotY+plotH-2){const shift=labelItems[labelItems.length-1].ly-(plotY+plotH-2);labelItems.forEach(g=>g.ly-=shift);}
   labelItems.forEach(g=>{pdf.setDrawColor(...g.color);pdf.setLineWidth(.5);pdf.line(plotX+plotW,g.y,legendX-1,g.ly);pdf.setFillColor(...g.color);pdf.roundedRect(legendX,g.ly-3.3,35,6.2,1,1,'F');pdf.setFont('helvetica','bold');pdf.setFontSize(6.3);pdf.setTextColor(...white);pdf.text(`${g.label}: ${g.value.toFixed(1)} s`,legendX+2,g.ly+.8,{maxWidth:31});});
-  const tableX=190,tableY=59,tableW=W-M-tableX,rowH=5.8;
+  const tableX=190,tableY=77,tableW=W-M-tableX,rowH=5.8;
   pdf.setFillColor(...navy);pdf.roundedRect(tableX,tableY,tableW,9,2,2,'F');
   pdf.setFont('helvetica','bold');pdf.setFontSize(7.2);pdf.setTextColor(...white);
   pdf.text('#',tableX+3,tableY+5.8);pdf.text(lang==='sv'?'Rutor':'Panels',tableX+11,tableY+5.8);pdf.text(lang==='sv'?'Tid':'Time',tableX+28,tableY+5.8);pdf.text(lang==='sv'?'Avvikelse / kommentar':'Deviation / comment',tableX+48,tableY+5.8);
   laps.slice(0,20).forEach((l,i)=>{const y=tableY+9+i*rowH;const std=Number(standardInput.value||0)*1000;const color=!std?[37,99,235]:(l.ms<=std?[22,163,74]:(l.ms<=std*1.2?[245,158,11]:[220,38,38]));if(i%2===0){pdf.setFillColor(247,249,252);pdf.rect(tableX,y,tableW,rowH,'F');}pdf.setFillColor(...color);pdf.circle(tableX+4.3,y+rowH/2,1.2,'F');pdf.setFont('helvetica','normal');pdf.setFontSize(7);pdf.setTextColor(...navy);pdf.text(String(i+1),tableX+7,y+3.8);pdf.text(String(l.pieces||1),tableX+17,y+3.8);pdf.text(sec(l.ms),tableX+28,y+3.8);const reason=({quality:lang==='sv'?'Kvalitet':'Quality',changeover:lang==='sv'?'Ställtid':'Changeover',machine:lang==='sv'?'Maskinfel':'Machine fault',other:lang==='sv'?'Annat':'Other'})[l.reason]||'';const note=[reason,l.note].filter(Boolean).join(': ');pdf.text(note||'-',tableX+48,y+3.8,{maxWidth:tableW-50});pdf.setDrawColor(235,239,245);pdf.line(tableX,y+rowH,tableX+tableW,y+rowH);});
   pdf.setFont('helvetica','normal');pdf.setFontSize(6.5);pdf.setTextColor(...muted);
-  pdf.text(lang==='sv'?'BRCT = medel av de fem snabbaste cyklerna. Störningsgrad = (medel CT - BRCT) / medel CT.':'BRCT = average of the five fastest cycles. Disturbance = (average CT - BRCT) / average CT.',M,H-5);
+  pdf.text(lang==='sv'?'Mål efter ställ = tillgänglig skifttid efter planerade ställ / uppmätt medelcykeltid × produkter per cykel.':'Target after changeovers = available shift time after planned changeovers / measured average cycle time × products per cycle.',M,H-5);
   pdf.text(new Date().toLocaleString(lang==='sv'?'sv-SE':'en-GB'),W-M-35,H-5);
   const blob=pdf.output('blob');
   await shareOrDownloadFile(blob,`20-cycle-check-report-${new Date().toISOString().slice(0,10)}.pdf`,'application/pdf',true);
@@ -1060,36 +1081,18 @@ async function exportReportModern(){
 function resetApp(){
   if(!confirm(lang==='sv'?'Är du säker på att du vill nollställa?':'Are you sure you want to reset?')) return;
   if(running){ cancelCurrentTimer(); }
-  laps=[]; pendingCycle={note:'',pieces:1,reason:''}; selectedIndex=-1; processInput.value=''; subprocessInput.value=''; dateInput.value=new Date().toISOString().slice(0,10); standardInput.value=''; taktInput.value=''; productInput.value=''; boundaryInput.value='';
+  laps=[]; pendingCycle={note:'',pieces:1,reason:''}; selectedIndex=-1; processInput.value=''; subprocessInput.value=''; dateInput.value=new Date().toISOString().slice(0,10); standardInput.value=''; taktInput.value=''; productInput.value=''; boundaryInput.value=''; processData={annualDemand:0,productsPerCycle:1,weeklyHours:78,shiftHours:8,setupsPerShift:0,setupMinutes:0};
   refreshUI();
 }
 
 /* ===== NEW: Kundtakt-uträkning (45 veckor/år) ===== */
-function calcCustomerTaktInteractive(){                 /* NEW */
-  const volStr = window.prompt(L[lang].PROMPT_VOLUME, '');   /* NEW */
-  if(volStr===null) return;                                  /* NEW */
-  const hrsStr = window.prompt(L[lang].PROMPT_HOURS, '78');  /* NEW */
-  if(hrsStr===null) return;                                  /* NEW */
-
-  const annualVol = Number(volStr);                          /* NEW */
-  const hoursPerWeek = Number(hrsStr);                       /* NEW */
-  if(!isFinite(annualVol) || annualVol<=0 ||                 /* NEW */
-     !isFinite(hoursPerWeek) || hoursPerWeek<=0){            /* NEW */
-    window.alert(L[lang].ALERT_BAD_INPUT);                   /* NEW */
-    return;                                                  /* NEW */
-  }                                                          /* NEW */
-
-  const secondsPerYear = hoursPerWeek * 45 * 3600;           /* NEW: 45 veckor/år */
-  const taktSeconds = secondsPerYear / annualVol;            /* NEW */
-  taktInput.value = String(Math.round(taktSeconds));         /* NEW: heltal sek */
-  saveState();                                               /* NEW */
-  drawChart();                                               /* NEW */
-}                                                            /* NEW */
+function calcCustomerTaktInteractive(){openProcessModal();}
 
 /* ===== Refresh UI ===== */
 function refreshUI(){
   renderList();
   updateKPIs();
+  updateCapacitySummary();
   drawChart();
   saveState();
 }
@@ -1105,6 +1108,7 @@ function init(){
   timerDisp.textContent='00:00.00';
 
   document.getElementById('btnLang').addEventListener('click', toggleLanguage);
+  $('#btnProcessData').addEventListener('click',openProcessModal);$('#closeProcessModal').addEventListener('click',closeProcessModal);$('#cancelProcessData').addEventListener('click',closeProcessModal);$('#saveProcessData').addEventListener('click',saveProcessForm);$('#processModal').addEventListener('click',e=>{if(e.target.id==='processModal')closeProcessModal()});['annualDemand','productsPerCycle','weeklyHours','shiftHours','setupsPerShift','setupMinutes'].forEach(id=>$('#'+id).addEventListener('input',updateProcessPreview));
   document.getElementById('btnExport').addEventListener('click', exportXLSX);
   document.getElementById('btnReport').addEventListener('click', exportReportModern);
   document.getElementById('btnReset').addEventListener('click', resetApp);
