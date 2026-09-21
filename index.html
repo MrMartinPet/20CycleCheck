@@ -153,7 +153,7 @@
         <span id="setupSummary">Process, datum, skift, tider, mix och planerade stopp</span>
       </div>
       <button id="btnProcessData" class="btn primary setup-btn" type="button">Ange processdata</button>
-      <div class="hidden" aria-hidden="true"><span id="lblProduct"></span><span id="lblBoundary"></span><span id="detailsSummary"></span><input id="product" type="text"><input id="boundary" type="text"></div>
+      <div class="hidden" aria-hidden="true"><span id="lblProduct"></span><span id="lblBoundary"></span><span id="detailsSummary"></span><span id="lblTakt"></span><input id="product" type="text"><input id="boundary" type="text"><input id="takt" type="number"></div>
     </div>
 
     <div class="card pad timer-card">
@@ -200,7 +200,7 @@
   </div>
 </div>
 <div id="processModal" class="modal-backdrop hidden" role="dialog" aria-modal="true"><div class="modal"><div class="modal-head"><h2 id="processModalTitle">Processdata och skiftmål</h2><button id="closeProcessModal" class="modal-close">×</button></div><div class="process-grid">
-<div><label id="lblProcess">PROCESS</label><input id="process" type="text" placeholder="Ange processnamn…"></div><div><label id="lblSubprocess">UNDERPROCESS</label><input id="subprocess" type="text" list="subprocessOptions" placeholder="Välj eller skriv…" autocomplete="off"><datalist id="subprocessOptions"></datalist></div><div><label id="lblDate">DATUM</label><input id="date" type="text" placeholder="yyyy-mm-dd"></div><div><label id="lblStandard">STANDARD WORK CT</label><input id="standard" type="number" min="0" step="0.1" placeholder="sek"><div id="colorRule" style="font-size:11px;color:var(--muted);margin-top:4px">Grön ≤ standard · Orange ≤ +20 % · Röd &gt; +20 %</div></div><div><label id="lblTakt">TAKTTID</label><div style="display:flex;gap:5px"><input id="takt" type="number" min="0" step="0.1" placeholder="sek"><button id="btnCalcTakt" class="btn small" type="button">Beräkna</button></div></div>
+<div><label id="lblProcess">PROCESS</label><input id="process" type="text" placeholder="Ange processnamn…"></div><div><label id="lblSubprocess">UNDERPROCESS</label><input id="subprocess" type="text" list="subprocessOptions" placeholder="Välj eller skriv…" autocomplete="off"><datalist id="subprocessOptions"></datalist></div><div><label id="lblDate">DATUM</label><input id="date" type="text" placeholder="yyyy-mm-dd"></div><div><label id="lblStandard">STANDARD WORK CT</label><input id="standard" type="number" min="0" step="0.1" placeholder="sek"><div id="colorRule" style="font-size:11px;color:var(--muted);margin-top:4px">Grön ≤ standard · Orange ≤ +20 % · Röd &gt; +20 %</div></div><div><label id="lblAnnualDemand">ÅRSVOLYM (ANTAL ENHETER/ÅR)</label><input id="annualDemand" type="number" min="0" step="1" inputmode="numeric" placeholder="t.ex. 100000"></div><div><label id="lblWeeklyHours">VECKOTAKT – KÖRBARA TIMMAR PER VECKA</label><input id="weeklyHours" type="number" min="0" step="0.1" inputmode="decimal" placeholder="t.ex. 78"></div>
 <div><label id="lblShiftType">AKTUELLT SKIFT</label><select id="shiftType"><option value="1">1:a skift</option><option value="2">2:a skift</option></select></div><div><label id="lblProductsCycle">PRODUKTER PER CYKEL / MIX</label><input id="productsPerCycle" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="t.ex. 1,5"></div><div><label id="lblStartTime">STARTTID</label><input id="startTime" type="time"></div><div><label id="lblEndTime">SLUTTID</label><input id="endTime" type="time"></div><div><label id="lblPlannedStop">PLANERAD STOPPTID (MIN)</label><input id="plannedStopMinutes" type="number" min="0" step="1" inputmode="decimal" placeholder="Uppstart, städ, rast"></div><div><label id="lblSetups">PLANERAT ANTAL STÄLL</label><input id="setupsPerShift" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div><div><label id="lblSetupMinutes">PLANERAD STÄLLTID PER STÄLL (MIN)</label><input id="setupMinutes" type="number" min="0" step="0.1" inputmode="decimal" placeholder="0"></div></div><div id="processPreview" class="calc-preview"></div><div class="modal-actions"><button id="cancelProcessData" class="btn secondary">Avbryt</button><button id="saveProcessData" class="btn primary">Spara och beräkna</button></div></div></div>
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
@@ -254,7 +254,7 @@ function formatSecondsForCSV(ms){const secs=(ms/1000).toFixed(2); return lang===
 let laps=[];
 let running=false, tStart=0, tick=null;
 let pendingCycle={note:'',pieces:1,reason:''};
-let processData={shiftType:'1',startTime:'06:18',endTime:'14:42',plannedStopMinutes:0,setupsPerShift:0,setupMinutes:0,productsPerCycle:1};
+let processData={shiftType:'1',startTime:'06:18',endTime:'14:42',plannedStopMinutes:0,setupsPerShift:0,setupMinutes:0,productsPerCycle:1,annualDemand:0,weeklyHours:78};
 let selectedIndex=-1;
 const STORAGE_KEY='cycle-check-state-v8';
 const LEGACY_STORAGE_KEY='cycle-check-state-v6';
@@ -311,7 +311,7 @@ function setLangTexts(){
   $('#colorRule').textContent=L[lang].COLOR_RULE;
   $('#langLabel').textContent = lang==='sv'?'SV':'EN';
   $('#btnLang').querySelector('.flag').textContent = lang==='sv'?'🇸🇪':'🇬🇧';
-  $('#btnCalcTakt').textContent=L[lang].CALC_TAKT_BTN;applyProcessDataTexts();
+  applyProcessDataTexts();
   renderList();
 }
 
@@ -520,14 +520,14 @@ function shiftMinutes(start,end){if(!start||!end)return 0;const [sh,sm]=start.sp
 function processCapacity(){const avg=avgMs(laps.map(x=>x.ms))/1000,br=brctMs(laps.map(x=>x.ms)),brSec=br?br/1000:0,std=Math.max(0,Number(standardInput.value)||0),ppc=Math.max(.01,Number(processData.productsPerCycle)||1),scheduled=shiftMinutes(processData.startTime,processData.endTime),stops=Math.max(0,Number(processData.plannedStopMinutes)||0),setups=Math.max(0,Number(processData.setupsPerShift)||0)*Math.max(0,Number(processData.setupMinutes)||0),plannedMinutes=Math.max(0,scheduled-stops-setups),seconds=plannedMinutes*60,toTarget=ct=>ct>0?Math.floor(seconds/ct*ppc):0;return{avg,brSec,std,ppc,scheduled,stops,setups,plannedMinutes,standardTarget:toTarget(std),actualTarget:toTarget(avg),reasonableTarget:toTarget(brSec)}}
 function formatQty(v){return Number(v||0).toLocaleString(lang==='sv'?'sv-SE':'en-GB',{maximumFractionDigits:1})}
 function updateCapacitySummary(){const x=processCapacity(),ok=laps.length&&x.plannedMinutes>0&&x.ppc>0;$('#capacitySummary').classList.toggle('hidden',!ok);$('#capCycles').textContent=ok&&x.std?formatQty(x.standardTarget):'–';$('#capProducts').textContent=ok?formatQty(x.actualTarget):'–';$('#capTarget').textContent=ok&&x.brSec?formatQty(x.reasonableTarget):'–'}
-function applyProcessDataTexts(){const s=lang==='sv';$('#processModalTitle').textContent=s?'Processdata och mål för aktuellt skift':'Process data and current shift target';$('#lblShiftType').textContent=s?'AKTUELLT SKIFT':'CURRENT SHIFT';$('#lblProductsCycle').textContent=s?'PRODUKTER PER CYKEL / MIX':'PRODUCTS PER CYCLE / MIX';$('#lblStartTime').textContent=s?'STARTTID':'START TIME';$('#lblEndTime').textContent=s?'SLUTTID':'END TIME';$('#lblPlannedStop').textContent=s?'PLANERAD STOPPTID (MIN)':'PLANNED STOP TIME (MIN)';$('#lblSetups').textContent=s?'PLANERAT ANTAL STÄLL':'PLANNED CHANGEOVERS';$('#lblSetupMinutes').textContent=s?'PLANERAD STÄLLTID PER STÄLL (MIN)':'PLANNED MINUTES PER CHANGEOVER';$('#cancelProcessData').textContent=s?'Avbryt':'Cancel';$('#saveProcessData').textContent=s?'Spara och beräkna':'Save and calculate';$('#capCyclesLabel').textContent=s?'Mål enligt Standard Work CT':'Target from Standard Work CT';$('#capProductsLabel').textContent=s?'Faktiskt mål enligt Medel CT':'Actual target from Average CT';$('#capTargetLabel').textContent=s?'Rimligt mål enligt BRCT':'Reasonable target from BRCT';updateProcessPreview()}
+function applyProcessDataTexts(){const s=lang==='sv';$('#processModalTitle').textContent=s?'Processdata och mål för aktuellt skift':'Process data and current shift target';$('#lblShiftType').textContent=s?'AKTUELLT SKIFT':'CURRENT SHIFT';$('#lblProductsCycle').textContent=s?'PRODUKTER PER CYKEL / MIX':'PRODUCTS PER CYCLE / MIX';$('#lblAnnualDemand').textContent=s?'ÅRSVOLYM (ANTAL ENHETER/ÅR)':'ANNUAL VOLUME (UNITS/YEAR)';$('#lblWeeklyHours').textContent=s?'VECKOTAKT – KÖRBARA TIMMAR PER VECKA':'WEEKLY RATE – AVAILABLE HOURS PER WEEK';$('#lblStartTime').textContent=s?'STARTTID':'START TIME';$('#lblEndTime').textContent=s?'SLUTTID':'END TIME';$('#lblPlannedStop').textContent=s?'PLANERAD STOPPTID (MIN)':'PLANNED STOP TIME (MIN)';$('#lblSetups').textContent=s?'PLANERAT ANTAL STÄLL':'PLANNED CHANGEOVERS';$('#lblSetupMinutes').textContent=s?'PLANERAD STÄLLTID PER STÄLL (MIN)':'PLANNED MINUTES PER CHANGEOVER';$('#cancelProcessData').textContent=s?'Avbryt':'Cancel';$('#saveProcessData').textContent=s?'Spara och beräkna':'Save and calculate';$('#capCyclesLabel').textContent=s?'Mål enligt Standard Work CT':'Target from Standard Work CT';$('#capProductsLabel').textContent=s?'Faktiskt mål enligt Medel CT':'Actual target from Average CT';$('#capTargetLabel').textContent=s?'Rimligt mål enligt BRCT':'Reasonable target from BRCT';updateProcessPreview()}
 function fillProcessModal(){for(const k of Object.keys(processData)){const el=$('#'+k);if(el)el.value=processData[k]??''}updateProcessPreview()}
 function readN(id,d=0){const n=Number(String($('#'+id).value||'').replace(',','.'));return Number.isFinite(n)?n:d}
-function readProcessForm(){return{shiftType:$('#shiftType').value,startTime:$('#startTime').value,endTime:$('#endTime').value,plannedStopMinutes:Math.max(0,readN('plannedStopMinutes')),setupsPerShift:Math.max(0,readN('setupsPerShift')),setupMinutes:Math.max(0,readN('setupMinutes')),productsPerCycle:Math.max(.01,readN('productsPerCycle',1))}}
+function readProcessForm(){return{shiftType:$('#shiftType').value,startTime:$('#startTime').value,endTime:$('#endTime').value,plannedStopMinutes:Math.max(0,readN('plannedStopMinutes')),setupsPerShift:Math.max(0,readN('setupsPerShift')),setupMinutes:Math.max(0,readN('setupMinutes')),productsPerCycle:Math.max(.01,readN('productsPerCycle',1)),annualDemand:Math.max(0,readN('annualDemand')),weeklyHours:Math.max(0,readN('weeklyHours'))}}
 function updateProcessPreview(){if(!$('#processPreview'))return;const old=processData;processData=readProcessForm();const x=processCapacity(),s=lang==='sv',runtime=Math.floor(x.plannedMinutes/60)+' h '+Math.round(x.plannedMinutes%60)+' min';$('#processPreview').innerHTML=s?'<b>Planerad körtid: '+runtime+'</b><br>Mål enligt Standard Work CT: '+(x.std?formatQty(x.standardTarget):'–')+' produkter<br>Faktiskt mål enligt Medel CT: '+(x.avg?formatQty(x.actualTarget):'–')+' produkter<br>Rimligt mål enligt BRCT: '+(x.brSec?formatQty(x.reasonableTarget):'–')+' produkter':'<b>Planned runtime: '+runtime+'</b><br>Target from Standard Work CT: '+(x.std?formatQty(x.standardTarget):'–')+' products<br>Actual target from Average CT: '+(x.avg?formatQty(x.actualTarget):'–')+' products<br>Reasonable target from BRCT: '+(x.brSec?formatQty(x.reasonableTarget):'–')+' products';processData=old}
 function applyShiftDefaults(){if($('#shiftType').value==='2'){$('#startTime').value='14:36';$('#endTime').value='00:00'}else{$('#startTime').value='06:18';$('#endTime').value='14:42'}updateProcessPreview()}
 function updateSetupSummary(){const ready=processInput.value.trim();$('#setupSummary').textContent=ready?((processInput.value||'–')+(subprocessInput.value?' · '+subprocessInput.value:'')+' · '+(dateInput.value||'–')+' · '+(processData.shiftType==='2'?'2:a skift':'1:a skift')):(lang==='sv'?'Process, datum, skift, tider, mix och planerade stopp':'Process, date, shift, times, mix and planned stops')}
-function openProcessModal(){fillProcessModal();$('#processModal').classList.remove('hidden');$('#process').focus()}function closeProcessModal(){$('#processModal').classList.add('hidden')}function saveProcessForm(){processData=readProcessForm();rememberSubprocess();saveState();updateSetupSummary();updateKPIs();updateCapacitySummary();drawChart();closeProcessModal()}
+function openProcessModal(){fillProcessModal();$('#processModal').classList.remove('hidden');$('#process').focus()}function closeProcessModal(){$('#processModal').classList.add('hidden')}function calculateTaktFromProcessData(){const annual=Number(processData.annualDemand)||0,weekly=Number(processData.weeklyHours)||0,mix=Math.max(.01,Number(processData.productsPerCycle)||1);taktInput.value=annual>0&&weekly>0?(weekly*45*3600/annual*mix).toFixed(1):''}function saveProcessForm(){processData=readProcessForm();calculateTaktFromProcessData();rememberSubprocess();saveState();updateSetupSummary();updateKPIs();updateCapacitySummary();drawChart();closeProcessModal()}
 
 /* ===== Diagram ===== */
 function drawChart(){
@@ -1062,7 +1062,7 @@ async function exportReportModern(){
 function resetApp(){
   if(!confirm(lang==='sv'?'Är du säker på att du vill nollställa?':'Are you sure you want to reset?')) return;
   if(running){ cancelCurrentTimer(); }
-  laps=[]; pendingCycle={note:'',pieces:1,reason:''}; selectedIndex=-1; processInput.value=''; subprocessInput.value=''; dateInput.value=new Date().toISOString().slice(0,10); standardInput.value=''; taktInput.value=''; productInput.value=''; boundaryInput.value=''; processData={shiftType:'1',startTime:'06:18',endTime:'14:42',plannedStopMinutes:0,setupsPerShift:0,setupMinutes:0,productsPerCycle:1};
+  laps=[]; pendingCycle={note:'',pieces:1,reason:''}; selectedIndex=-1; processInput.value=''; subprocessInput.value=''; dateInput.value=new Date().toISOString().slice(0,10); standardInput.value=''; taktInput.value=''; productInput.value=''; boundaryInput.value=''; processData={shiftType:'1',startTime:'06:18',endTime:'14:42',plannedStopMinutes:0,setupsPerShift:0,setupMinutes:0,productsPerCycle:1,annualDemand:0,weeklyHours:78};
   refreshUI();
 }
 
@@ -1091,7 +1091,7 @@ function init(){
   if(!processInput.value.trim())setTimeout(openProcessModal,150);
 
   document.getElementById('btnLang').addEventListener('click', toggleLanguage);
-  $('#btnProcessData').addEventListener('click',openProcessModal);$('#closeProcessModal').addEventListener('click',closeProcessModal);$('#cancelProcessData').addEventListener('click',closeProcessModal);$('#saveProcessData').addEventListener('click',saveProcessForm);$('#processModal').addEventListener('click',e=>{if(e.target.id==='processModal')closeProcessModal()});['productsPerCycle','startTime','endTime','plannedStopMinutes','setupsPerShift','setupMinutes'].forEach(id=>$('#'+id).addEventListener('input',updateProcessPreview));$('#shiftType').addEventListener('change',applyShiftDefaults);
+  $('#btnProcessData').addEventListener('click',openProcessModal);$('#closeProcessModal').addEventListener('click',closeProcessModal);$('#cancelProcessData').addEventListener('click',closeProcessModal);$('#saveProcessData').addEventListener('click',saveProcessForm);$('#processModal').addEventListener('click',e=>{if(e.target.id==='processModal')closeProcessModal()});['productsPerCycle','annualDemand','weeklyHours','startTime','endTime','plannedStopMinutes','setupsPerShift','setupMinutes'].forEach(id=>$('#'+id).addEventListener('input',updateProcessPreview));$('#shiftType').addEventListener('change',applyShiftDefaults);
   document.getElementById('btnExport').addEventListener('click', exportXLSX);
   document.getElementById('btnReport').addEventListener('click', exportReportModern);
   document.getElementById('btnReset').addEventListener('click', resetApp);
@@ -1103,8 +1103,7 @@ function init(){
   boundaryInput.addEventListener('input', saveState);
   standardInput.addEventListener('input',()=>{saveState();renderList();drawChart();});
   taktInput.addEventListener('input', ()=>{ saveState(); renderList(); drawChart(); });
-  document.getElementById('btnCalcTakt').addEventListener('click',calcCustomerTaktInteractive);
-  window.addEventListener('resize', ()=>{ renderList(); drawChart(); });
+   window.addEventListener('resize', ()=>{ renderList(); drawChart(); });
 
   drawChart();
 }
