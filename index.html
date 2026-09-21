@@ -1088,7 +1088,7 @@ function resetApp(){
 }
 
 /* ===== NEW: Kundtakt-uträkning (45 veckor/år) ===== */
-function calcCustomerTaktInteractive(){openProcessModal();}
+function calcCustomerTaktInteractive(){const vol=window.prompt(L[lang].PROMPT_VOLUME,'');if(vol===null)return;const hrs=window.prompt(L[lang].PROMPT_HOURS,'78');if(hrs===null)return;const annual=Number(String(vol).replace(',','.')),weekly=Number(String(hrs).replace(',','.')),mix=Math.max(.01,Number(processData.productsPerCycle)||1);if(!(annual>0&&weekly>0)){window.alert(L[lang].ALERT_BAD_INPUT);return}taktInput.value=(weekly*45*3600/annual*mix).toFixed(1);saveState();drawChart()}
 
 /* ===== Refresh UI ===== */
 function refreshUI(){
